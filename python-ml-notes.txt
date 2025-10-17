@@ -1,0 +1,33 @@
+I'm installing pytorch directly onto my user profile
+
+# (Optional) create a virtual environment
+python3 -m venv ~/pytorch_env
+source ~/pytorch_env/bin/activate
+
+# install pytorch for CUDA (A100 supports CUDA 12+)
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+pip install numpy matplotlib
+
+
+# to verify gpu access: 
+import torch
+print(torch.cuda.get_device_name(0))
+
+
+
+#alternatively, to use a docker container this should work:
+
+docker run --gpus all -it --rm nvcr.io/nvidia/pytorch:24.05-py3
+
+
+#for an ide like experience, jupyterlab
+
+Install Jupyter:
+
+pip install jupyterlab
+
+jupyter lab --no-browser --port=8888
+
+ssh -L 8888:localhost:8888 username@your-node-address
+
+#then copy paste the token from the ssh output in browser window
