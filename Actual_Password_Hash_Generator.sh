@@ -6,28 +6,30 @@
 #   This script generates a specified number of random passwords (length 4–16 characters)
 #   and computes a custom hash for each one. The results are written to a file in the format:
 #
-#       password:            hash
+#       password
+#           hash_function_used:            hash
 #
-#   The colon stays tight to the password, and the hash is aligned neatly in a fixed column.
+#   The colon stays tight to the hash_function_used, and the hash is aligned neatly in a fixed column.
 #
 # USAGE:
-#   ./BulkHashGenerator.sh <count>
-#   <count> = number of password:hash pairs to generate (1 ≤ count ≤ 500000)
+#   ./Actual_Password_Hash_Generator.sh <count>
+#   <count> = number of passwords to generate (1 ≤ count ≤ 500000)
+#   Each password is hashed using a multiple hashing algorithms.
 #
 # EXAMPLES:
-#   ./BulkHashGenerator.sh 100
-#       → Generates 100 random password:hash pairs and saves them to password_hashes.txt
+#   ./Actual_Password_Hash_Generator.sh 100
+#       → Generates 100 random passwords, hashes each password with each hashing function and saves them to actual_password_hashes.txt
 #
 # OUTPUT:
-#   - Results are saved to "password_hashes.txt" in the current directory.
-#   - Each line contains a password and its hash, aligned for readability.
+#   - Results are saved to "actual_password_hashes.txt" in the current directory.
+#   - Each line contains a password and its hash's, aligned for readability.
 #   - At the end, the script prints the total runtime in seconds to the console.
 #
 # PERFORMANCE:
 #   - Uses parallel execution across all CPU cores for speed.
 #   - Suitable for generating up to ~500,000 entries without overwhelming the system.
 
-# BulkHashGenerator.sh - Generate random passwords (length 4–16) and custom hashes in parallel
+# Actual_Password_Hash_Generator.sh - Generate random passwords (length 4–16) and custom hashes in parallel
 
 
 MAX=500000 # lets not overwhelm the system
@@ -44,15 +46,11 @@ fi
 # Clear output file
 > "$OUTPUT_FILE"
 
-# Function to generate one password:hash pair
+# Function to generate one password and hashes it
 generate_pair()
 {
     LEN=$(( (RANDOM % 13) + 4 ))
-    PASSWORD=$(tr -dc 'A-Za-z0-9\!\@\#\$\%\^\&\*\(\)\-\_\=\+
-
-\[\]
-
-\{\}' < /dev/urandom | head -c"$LEN")
+    PASSWORD=$(tr -dc 'A-Za-z0-9\!\@\#\$\%\^\&\*\(\)\-\_\=\+\[\]\{\}' < /dev/urandom | head -c"$LEN")
 
     # CUSTOM_HASH=$(./Hash_Password.sh "$PASSWORD")
     SHA1_HASH=$(echo -n "$PASSWORD" | sha1sum | awk '{print $1}')

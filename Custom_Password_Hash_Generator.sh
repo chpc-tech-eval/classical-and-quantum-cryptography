@@ -11,12 +11,12 @@
 #   The colon stays tight to the password, and the hash is aligned neatly in a fixed column.
 #
 # USAGE:
-#   ./BulkHashGenerator.sh <count>
+#   ./Custom_Password_Hash_Generator.sh <count>
 #   <count> = number of password:hash pairs to generate (1 ≤ count ≤ 500000)
 #
 # EXAMPLES:
-#   ./BulkHashGenerator.sh 100
-#       → Generates 100 random password:hash pairs and saves them to password_hashes.txt
+#   ./Custom_Password_Hash_Generator.sh 100
+#       → Generates 100 random password:hash pairs and saves them to custom_password_hashes.txt
 #
 # OUTPUT:
 #   - Results are saved to "password_hashes.txt" in the current directory.
@@ -27,7 +27,7 @@
 #   - Uses parallel execution across all CPU cores for speed.
 #   - Suitable for generating up to ~500,000 entries without overwhelming the system.
 
-# BulkHashGenerator.sh - Generate random passwords (length 4–16) and custom hashes in parallel
+# Custom_Password_Hash_Generator.sh - Generate random passwords (length 4–16) and custom hashes in parallel
 
 
 MAX=500000 # lets not overwhelm the system
