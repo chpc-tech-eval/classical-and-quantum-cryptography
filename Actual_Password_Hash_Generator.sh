@@ -32,7 +32,7 @@
 
 MAX=500000 # lets not overwhelm the system
 COUNT=$1
-OUTPUT_FILE="password_hashes.txt"
+OUTPUT_FILE="actual_password_hashes.txt"
 START=$(date +%s)
 
 # Validate input
@@ -47,11 +47,27 @@ fi
 # Function to generate one password:hash pair
 generate_pair()
 {
-    # Password length 4–16
     LEN=$(( (RANDOM % 13) + 4 ))
-    PASSWORD=$(tr -dc 'A-Za-z0-9\!\@\#\$\%\^\&\*\(\)\-\_\=\+\[\]\{\}' < /dev/urandom | head -c"$LEN")
-    HASH=$(./Hash_Password.sh "$PASSWORD")
-    printf "%s\n" "$HASH"
+    PASSWORD=$(tr -dc 'A-Za-z0-9\!\@\#\$\%\^\&\*\(\)\-\_\=\+
+
+\[\]
+
+\{\}' < /dev/urandom | head -c"$LEN")
+
+    # CUSTOM_HASH=$(./Hash_Password.sh "$PASSWORD")
+    SHA1_HASH=$(echo -n "$PASSWORD" | sha1sum | awk '{print $1}')
+    SHA3_HASH=$(echo -n "$PASSWORD" | openssl dgst -sha3-512 | awk '{print $2}')
+    SHA256_HASH=$(echo -n "$PASSWORD" | sha256sum | awk '{print $1}')
+    SHA512_HASH=$(echo -n "$PASSWORD" | sha512sum | awk '{print $1}')
+    SHA512Q_HASH=$(echo -n "$PASSWORD" | openssl dgst -sha512 | awk '{print $2}') # Placeholder for "quantum"
+
+    # printf "%-20s %s\n" "$PASSWORD:" "$CUSTOM_HASH"
+    printf "%s\n" "$PASSWORD"
+    printf "%-20s %s\n" "  SHA-1:" "$SHA1_HASH"
+    printf "%-20s %s\n" "  SHA-3:" "$SHA3_HASH"
+    printf "%-20s %s\n" "  SHA-256:" "$SHA256_HASH"
+    printf "%-20s %s\n" "  SHA-512:" "$SHA512_HASH"
+    printf "%-20s %s\n\n" "  SHA-512Q:" "$SHA512Q_HASH"
 }
 
 export -f generate_pair
