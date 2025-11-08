@@ -20,8 +20,17 @@ class QAOALoss(nn.Module):
         
     def forward(self, char_logits, target_chars, generated_hash, target_hash):
         # Character prediction loss (standard language modeling)
-        char_loss = self.ce_loss(char_logits.view(-1, char_logits.size(-1)), 
-                                target_chars.view(-1))
+        # char_logits shape: (batch_size, seq_len, vocab_size)
+        # target_chars shape: (batch_size,)
+        
+        # Reshape for cross entropy: (batch_size * seq_len, vocab_size) and (batch_size * seq_len)
+        batch_size, seq_len, vocab_size = char_logits.shape
+        char_logits_flat = char_logits.reshape(-1, vocab_size)
+        
+        # Repeat target_chars for each position in the sequence
+        target_chars_flat = target_chars.unsqueeze(1).repeat(1, seq_len).reshape(-1)
+        
+        char_loss = self.ce_loss(char_logits_flat, target_chars_flat)
         
         # Hash matching loss (QAOA-style objective)
         hash_loss = nn.MSELoss()(generated_hash, target_hash)
@@ -81,6 +90,7 @@ def train_hash_cracker(epochs=100, batch_size=32):
                 continue
                 
             batch = [training_pairs[idx] for idx in batch_indices]
+            current_batch_size = len(batch)
             
             # Prepare batch data - ensure everything is on the same device
             input_seqs = torch.tensor([item['input_sequence'] for item in batch], device=device)
@@ -90,8 +100,15 @@ def train_hash_cracker(epochs=100, batch_size=32):
             # Forward pass
             char_logits, hidden = model(input_seqs, target_hashes)
             
+            # Debug: print shapes
+            if epoch == 0 and batches_processed == 0:
+                print(f"Debug shapes:")
+                print(f"  input_seqs: {input_seqs.shape}")  # Should be (batch_size, seq_len)
+                print(f"  target_chars: {target_chars.shape}")  # Should be (batch_size,)
+                print(f"  char_logits: {char_logits.shape}")  # Should be (batch_size, seq_len, vocab_size)
+                print(f"  target_hashes: {target_hashes.shape}")  # Should be (batch_size, hash_dim)
+            
             # Compute hash of generated sequence (differentiable approximation)
-            # Remove the torch.no_grad() to allow gradients to flow through hash function
             generated_hash = hash_function.differentiable_hash(char_logits)
             
             # QAOA-inspired loss
@@ -111,7 +128,7 @@ def train_hash_cracker(epochs=100, batch_size=32):
             batches_processed += 1
         
         # Print progress
-        if batches_processed > 0 and (epoch + 1) % 10 == 0:
+        if batches_processed > 0 and (epoch + 1) % 5 == 0:  # Print more frequently
             avg_loss = total_loss / batches_processed
             avg_hash_loss = total_hash_loss / batches_processed
             avg_char_loss = total_char_loss / batches_processed
@@ -122,7 +139,7 @@ def train_hash_cracker(epochs=100, batch_size=32):
             print(f"  Char Loss: {avg_char_loss:.4f}")
             
             # Generate sample to show progress
-            if (epoch + 1) % 30 == 0 and len(training_pairs) > 0:
+            if (epoch + 1) % 20 == 0 and len(training_pairs) > 0:
                 generate_from_hash_sample(target_hashes[0], f"Epoch {epoch+1}")
     
     # Save model

@@ -17,8 +17,13 @@ with open("passwords.txt", "r", encoding="utf-8") as f:
 
 print(f"Loaded {len(passwords)} passwords")
 
+# Filter passwords by length - only use longer passwords
+min_password_length = 8
+filtered_passwords = [pwd for pwd in passwords if len(pwd) >= min_password_length]
+print(f"Using {len(filtered_passwords)} passwords with length >= {min_password_length}")
+
 # Create character set and mappings from ALL passwords
-all_text = ''.join(passwords)
+all_text = ''.join(filtered_passwords)
 chars = sorted(list(set(all_text)))
 char_to_idx = {ch: i for i, ch in enumerate(chars)}
 idx_to_char = {i: ch for i, ch in enumerate(chars)}
@@ -27,41 +32,23 @@ vocab_size = len(chars)
 print(f"Vocabulary: {vocab_size} characters")
 print(f"Character set: {''.join(chars)}")
 
-def create_hash_password_pairs(passwords, seq_length=20):
+def create_hash_password_pairs(passwords, seq_length=10):
     """Create training pairs: (target_hash, password_sequence)"""
     hash_function = SimpleHashFunction()
     pairs = []
     
     for password in passwords:
-        if len(password) < 4:  # Skip very short passwords
-            continue
-            
         # Create target hash
         target_hash = hash_function.actual_hash(password)
         
         # Convert password to character sequences
         encoded = [char_to_idx.get(c, 0) for c in password]
         
-        # Only create sequences if password is long enough
-        if len(encoded) > seq_length:
-            # Create overlapping sequences
-            for i in range(len(encoded) - seq_length):
-                seq = encoded[i:i+seq_length]
-                target_char = encoded[i+seq_length]
-                
-                pairs.append({
-                    'target_hash': target_hash,
-                    'input_sequence': seq,
-                    'target_char': target_char,
-                    'full_password': password
-                })
-        else:
-            # For short passwords, pad and create at least one sequence
-            seq = encoded[:seq_length]
-            # Pad if necessary
-            if len(seq) < seq_length:
-                seq = seq + [0] * (seq_length - len(seq))
-            target_char = 0  # Use padding index as target
+        # Create multiple training examples from each password
+        # Use sliding window approach
+        for i in range(len(encoded) - seq_length):
+            seq = encoded[i:i+seq_length]
+            target_char = encoded[i+seq_length]
             
             pairs.append({
                 'target_hash': target_hash,
@@ -73,16 +60,21 @@ def create_hash_password_pairs(passwords, seq_length=20):
     return pairs
 
 # Create training pairs
-training_pairs = create_hash_password_pairs(passwords)
+training_pairs = create_hash_password_pairs(filtered_passwords, seq_length=8)
 
 print(f"Created {len(training_pairs)} training pairs")
 
 if len(training_pairs) > 0:
-    print(f"Sample training pair:")
-    sample = training_pairs[0]
-    print(f"  Password: {sample['full_password']}")
-    print(f"  Input sequence length: {len(sample['input_sequence'])}")
-    print(f"  Target char: {idx_to_char[sample['target_char']] if sample['target_char'] in idx_to_char else 'PAD'}")
-    print(f"  Target hash shape: {sample['target_hash'].shape}")
-else:
-    print("WARNING: No training pairs created! Check your passwords.txt file")
+    # Show samples with diverse target characters
+    print(f"\nSample training pairs (showing target character diversity):")
+    seen_chars = set()
+    samples_shown = 0
+    
+    for pair in training_pairs:
+        if pair['target_char'] not in seen_chars and pair['target_char'] in idx_to_char:
+            seen_chars.add(pair['target_char'])
+            print(f"  Password: {pair['full_password']}")
+            print(f"  Target char: '{idx_to_char[pair['target_char']]}' (index: {pair['target_char']})")
+            samples_shown += 1
+            if samples_shown >= 5:
+                break
