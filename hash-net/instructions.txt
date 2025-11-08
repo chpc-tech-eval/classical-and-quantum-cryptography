@@ -1,0 +1,19 @@
+I keep all the python stuff in a virtual environment, so id first open that up
+
+source ~/pytorch_env/bin/activate
+
+
+Training and running the actual model
+
+1) generate some training data, any number of passwords, must output to passwords.txt
+							
+python generate_training_data.py --count 10000 --output passwords.txt
+
+
+2) Train the model to crack hashes of the simple hashing algorithm
+
+python qaoa_train.py
+
+3) Test the model to check if it can actually crack the hash function
+
+python hash_generate.py
