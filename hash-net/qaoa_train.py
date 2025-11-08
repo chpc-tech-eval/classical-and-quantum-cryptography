@@ -143,11 +143,8 @@ def train_hash_cracker(epochs=100, batch_size=32):
                 generate_from_hash_sample(target_hashes[0], f"Epoch {epoch+1}")
     
     # Save model
-    torch.save({
-        'model_state_dict': model.state_dict(),
-        'hash_proj_state_dict': hash_function.hash_proj.state_dict(),
-        'vocab_size': vocab_size
-    }, "hash_cracker_rnn.pth")
+    torch.save(model.state_dict(), "hash_cracker_rnn.pth")
+    print("model saved successfully!")
 
 def generate_from_hash_sample(target_hash, description=""):
     """Generate password from target hash"""
