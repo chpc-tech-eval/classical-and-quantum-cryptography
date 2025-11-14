@@ -1,0 +1,14 @@
+~I have all my python stuff in a virtual environment do id start that up first
+
+
+1) generate the training data, with any number of passwords to generate
+
+python generaate_training_data.py --count 10000
+
+2) train the hash cracker on this data
+
+python qaoa_train.py
+
+3) test hash cracking
+
+python hash_generate.py
