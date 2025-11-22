@@ -1,7 +1,7 @@
-# improved_quantum_password_cracker.py
+# enhanced_quantum_password_cracker.py
 #!/usr/bin/env python3
 """
-IMPROVED Quantum Password Cracker with better optimization methods and detailed logging
+ENHANCED Quantum Password Cracker with improved genetic and QAOA algorithms
 """
 
 import numpy as np
@@ -13,7 +13,7 @@ from typing import List, Tuple, Dict, Optional
 import matplotlib.pyplot as plt
 from generate_training_data_with_hashes import ToyHasher
 
-class ImprovedQuantumPasswordCracker:
+class EnhancedQuantumPasswordCracker:
     def __init__(self, hasher=None, verbose: bool = True):
         self.hasher = hasher or ToyHasher()
         self.password_cache = {}
@@ -26,120 +26,19 @@ class ImprovedQuantumPasswordCracker:
             timestamp = time.strftime("%H:%M:%S")
             print(f"[{timestamp} {level:6}] {message}")
     
-    def improved_brute_force(self, target_hash: str, max_length: int = 8, 
-                           timeout: int = 30) -> Tuple[str, int, float]:
+    def enhanced_genetic_algorithm(self, target_hash: str, population_size: int = 100,
+                                 generations: int = 200, timeout: int = 30) -> Tuple[str, int, float]:
         """
-        Improved brute force with better character set and early stopping
+        ENHANCED genetic algorithm with better initialization, crossover, and mutation
         """
-        self.log(f"Starting improved brute force (max length: {max_length})")
-        start_time = time.time()
-        attempts = 0
-        last_log_time = start_time
-        
-        # More realistic character set (lowercase only for simple passwords)
-        charset = "abcdefghijklmnopqrstuvwxyz"
-        
-        for length in range(1, max_length + 1):
-            if time.time() - start_time > timeout:
-                self.log(f"Timeout reached at length {length}")
-                break
-                
-            self.log(f"Trying passwords of length {length}...")
-            
-            for candidate in itertools.product(charset, repeat=length):
-                current_time = time.time()
-                if current_time - start_time > timeout:
-                    self.log(f"Timeout during length {length}")
-                    break
-                    
-                # Progress logging every 2 seconds
-                if current_time - last_log_time > 2.0:
-                    password = ''.join(candidate)
-                    self.log(f"Progress: length {length}, current: '{password}', attempts: {attempts}")
-                    last_log_time = current_time
-                    
-                password = ''.join(candidate)
-                attempts += 1
-                
-                if self.hasher.hash_to_hex(password) == target_hash:
-                    elapsed = time.time() - start_time
-                    self.log(f"SUCCESS: Found '{password}' after {attempts} attempts in {elapsed:.2f}s")
-                    return password, attempts, elapsed
-        
-        elapsed = time.time() - start_time
-        self.log(f"FAILED: No match found after {attempts} attempts in {elapsed:.2f}s")
-        return None, attempts, elapsed
-    
-    def improved_dictionary_attack(self, target_hash: str, 
-                                 timeout: int = 30) -> Tuple[str, int, float]:
-        """
-        Improved dictionary attack with better wordlist and patterns
-        """
-        # Expanded wordlist
-        wordlist = [
-            "password", "admin", "hello", "secret", "test", "user", "login",
-            "welcome", "123456", "letmein", "master", "qwerty", "abc123",
-            "password1", "admin123", "hello123", "test123", "welcome1"
-        ]
-        
-        self.log(f"Starting improved dictionary attack ({len(wordlist)} base words)")
-        start_time = time.time()
-        attempts = 0
-        
-        # More realistic modifications
-        suffixes = ['', '1', '12', '123', '1234', '!', '!!', '0', '00', '000']
-        prefixes = ['', '!', '#', '$', '1', '12']
-        
-        total_combinations = len(wordlist) * (1 + len(prefixes) * len(suffixes))
-        self.log(f"Total possible combinations: {total_combinations}")
-        
-        for i, base_word in enumerate(wordlist):
-            if time.time() - start_time > timeout:
-                self.log(f"Timeout after testing {i+1}/{len(wordlist)} base words")
-                break
-                
-            self.log(f"Testing base word: '{base_word}' ({i+1}/{len(wordlist)})")
-            
-            # Try the base word first
-            attempts += 1
-            if self.hasher.hash_to_hex(base_word) == target_hash:
-                elapsed = time.time() - start_time
-                self.log(f"SUCCESS: Found '{base_word}' (base word) after {attempts} attempts in {elapsed:.2f}s")
-                return base_word, attempts, elapsed
-            
-            # Then try modifications
-            modification_count = 0
-            for prefix in prefixes:
-                for suffix in suffixes:
-                    if modification_count > 0 and modification_count % 50 == 0:
-                        self.log(f"  Tested {modification_count} modifications for '{base_word}'")
-                    
-                    candidate = prefix + base_word + suffix
-                    attempts += 1
-                    modification_count += 1
-                    
-                    if self.hasher.hash_to_hex(candidate) == target_hash:
-                        elapsed = time.time() - start_time
-                        self.log(f"SUCCESS: Found '{candidate}' (modified) after {attempts} attempts in {elapsed:.2f}s")
-                        return candidate, attempts, elapsed
-        
-        elapsed = time.time() - start_time
-        self.log(f"FAILED: No match found after {attempts} attempts in {elapsed:.2f}s")
-        return None, attempts, elapsed
-    
-    def improved_genetic_algorithm(self, target_hash: str, population_size: int = 50,
-                                 generations: int = 100, timeout: int = 30) -> Tuple[str, int, float]:
-        """
-        Vastly improved genetic algorithm with better fitness and operators
-        """
-        self.log(f"Starting improved genetic algorithm (pop: {population_size}, gens: {generations})")
+        self.log(f"Starting ENHANCED genetic algorithm (pop: {population_size}, gens: {generations})")
         start_time = time.time()
         
-        # Character set focused on common passwords
-        charset = "abcdefghijklmnopqrstuvwxyz0123456789"
+        # Expanded character set
+        charset = "abcdefghijklmnopqrstuvwxyz0123456789!@#$%&*"
         attempts = 0
         
-        # Store evolution data for analysis
+        # Store evolution data
         evolution_data = {
             'generations': [],
             'best_fitness': [],
@@ -149,51 +48,87 @@ class ImprovedQuantumPasswordCracker:
         }
         
         def fitness(password):
-            """Improved fitness function that rewards exact matches and close hashes"""
-            if not password or len(password) < 4 or len(password) > 12:
-                return -1000
+            """Enhanced fitness function with multiple criteria"""
+            if not password or len(password) < 2 or len(password) > 20:
+                return -10000
                 
             candidate_hash = self.hasher.hash_password(password)
             target_hash_int = int(target_hash, 16)
             
-            # Hash difference (closer to 0 is better)
+            # Primary: Exact hash match (massive bonus)
+            if candidate_hash == target_hash_int:
+                return 1000000
+                
+            # Secondary: Hash similarity (bit-level comparison)
             hash_diff = abs(candidate_hash - target_hash_int)
             
-            # Length bonus (prefer reasonable lengths)
-            length_penalty = abs(len(password) - 8) * 1000
+            # Tertiary: Length similarity to common passwords (4-12 chars)
+            length_penalty = abs(len(password) - 8) * 100
             
-            # Base fitness
-            base_fitness = -hash_diff - length_penalty
+            # Character type bonus (reward realistic passwords)
+            char_bonus = 0
+            if any(c.isdigit() for c in password):
+                char_bonus += 50
+            if any(c in "!@#$%&*" for c in password):
+                char_bonus += 100
+            if any(c.isupper() for c in password):
+                char_bonus += 50
             
-            # Exact match bonus
-            if candidate_hash == target_hash_int:
-                base_fitness += 1000000
-                
-            return base_fitness
+            # Final fitness calculation
+            fitness_score = -hash_diff - length_penalty + char_bonus
+            
+            return fitness_score
         
-        # Initialize population with common patterns
+        # ENHANCED Population Initialization
         population = []
-        common_starts = ["pass", "admin", "hello", "test", "user", "secret"]
-        common_ends = ["", "1", "123", "1234", "!", "0", "00"]
+        common_passwords = [
+            "password", "admin", "hello", "test", "user", "secret", "123456", 
+            "letmein", "welcome", "login", "master", "qwerty", "abc123"
+        ]
         
-        self.log("Initializing population...")
-        for i in range(population_size):
-            if np.random.random() < 0.3 and common_starts:
-                # Use common patterns
-                base = np.random.choice(common_starts)
-                if np.random.random() < 0.7:
-                    base += np.random.choice(common_ends)
-                password = base
-                self.log(f"  Individual {i+1}: '{password}' (pattern-based)")
-            else:
-                # Random password
-                length = np.random.randint(4, 10)
-                password = ''.join(np.random.choice(list(charset), length))
-                self.log(f"  Individual {i+1}: '{password}' (random)")
-            population.append(password)
+        self.log("Enhanced population initialization...")
+        
+        # Strategy 1: Direct common passwords (30%)
+        for pwd in common_passwords[:min(10, len(common_passwords))]:
+            population.append(pwd)
+            self.log(f"  Added common password: '{pwd}'")
+        
+        # Strategy 2: Common patterns with modifications (40%)
+        patterns = ["pass", "admin", "hello", "test", "user", "secret"]
+        suffixes = ["", "1", "12", "123", "1234", "!", "!!", "0", "00", "000", "2024"]
+        
+        while len(population) < population_size * 0.7:
+            base = np.random.choice(patterns)
+            suffix = np.random.choice(suffixes)
+            password = base + suffix
+            if password not in population:
+                population.append(password)
+        
+        # Strategy 3: Smart random generation (30%)
+        while len(population) < population_size:
+            # Vary length based on common password lengths
+            length = np.random.choice([4, 5, 6, 7, 8, 9, 10], p=[0.1, 0.15, 0.2, 0.2, 0.15, 0.1, 0.1])
+            
+            # Mix character types realistically
+            if np.random.random() < 0.7:  # 70% lowercase only
+                password = ''.join(np.random.choice(list("abcdefghijklmnopqrstuvwxyz"), length))
+            elif np.random.random() < 0.5:  # 15% alphanumeric
+                password = ''.join(np.random.choice(list("abcdefghijklmnopqrstuvwxyz0123456789"), length))
+            else:  # 15% with special chars
+                base = ''.join(np.random.choice(list("abcdefghijklmnopqrstuvwxyz0123456789"), length-1))
+                special = np.random.choice(list("!@#$%&*"))
+                pos = np.random.randint(len(base) + 1)
+                password = base[:pos] + special + base[pos:]
+            
+            if password not in population:
+                population.append(password)
+        
+        population = population[:population_size]
         
         best_fitness = -float('inf')
         best_password = None
+        stagnation_count = 0
+        last_improvement = 0
         
         for generation in range(generations):
             if time.time() - start_time > timeout:
@@ -225,8 +160,16 @@ class ImprovedQuantumPasswordCracker:
                 if fitness_val > best_fitness:
                     best_fitness = fitness_val
                     best_password = pwd
+                    last_improvement = generation
+                    stagnation_count = 0
             
-            # Calculate diversity (unique passwords)
+            # Stagnation detection
+            if generation - last_improvement > 20:
+                stagnation_count += 1
+                if stagnation_count > 5:
+                    self.log(f"Stagnation detected at generation {generation}, increasing mutation rate")
+            
+            # Calculate diversity
             unique_passwords = len(set(population))
             diversity = unique_passwords / len(population)
             
@@ -237,84 +180,115 @@ class ImprovedQuantumPasswordCracker:
             evolution_data['best_password'].append(current_best_password)
             evolution_data['diversity'].append(diversity)
             
-            # Log generation progress
-            if generation % 10 == 0 or generation < 5:
-                self.log(f"Generation {generation:3d}: best='{current_best_password}' "
-                        f"fitness={current_best_fitness:8.0f} "
-                        f"avg={np.mean(fitness_scores):8.0f} "
-                        f"diversity={diversity:.2f}")
+            # Log progress
+            if generation % 20 == 0 or generation < 5:
+                self.log(f"Gen {generation:3d}: best='{current_best_password}' "
+                        f"fitness={current_best_fitness:8.0f} diversity={diversity:.2f}")
             
-            # Elitism: keep best candidate
-            new_population = [population[np.argmax(fitness_scores)]]
+            # ENHANCED Selection and Reproduction
+            new_population = []
             
-            # Create new population
+            # Elitism: keep top 10%
+            elite_count = max(1, population_size // 10)
+            elite_indices = np.argsort(fitness_scores)[-elite_count:]
+            for idx in elite_indices:
+                new_population.append(population[idx])
+            
+            # Enhanced crossover and mutation
             while len(new_population) < population_size:
-                # Tournament selection
-                tournament_size = 3
+                # Tournament selection with adaptive size
+                tournament_size = 3 + min(5, stagnation_count)
                 tournament_indices = np.random.choice(len(population), tournament_size, replace=False)
                 tournament_fitness = [fitness_scores[i] for i in tournament_indices]
                 winner_idx = tournament_indices[np.argmax(tournament_fitness)]
                 parent1 = population[winner_idx]
                 
-                # 70% crossover, 30% mutation
-                if np.random.random() < 0.7 and len(new_population) < population_size - 1:
-                    # Find second parent
+                # Adaptive mutation rate based on stagnation
+                base_mutation_rate = 0.3 + (stagnation_count * 0.1)
+                
+                if np.random.random() < 0.8 and len(new_population) < population_size - 1:
+                    # Enhanced crossover
                     tournament_indices2 = np.random.choice(len(population), tournament_size, replace=False)
                     tournament_fitness2 = [fitness_scores[i] for i in tournament_indices2]
                     winner_idx2 = tournament_indices2[np.argmax(tournament_fitness2)]
                     parent2 = population[winner_idx2]
                     
-                    # Crossover
-                    if len(parent1) > 1 and len(parent2) > 1:
-                        cross_point1 = np.random.randint(1, len(parent1))
-                        cross_point2 = np.random.randint(1, len(parent2))
-                        child1 = parent1[:cross_point1] + parent2[cross_point2:]
-                        child2 = parent2[:cross_point2] + parent1[cross_point1:]
+                    # Multiple crossover strategies
+                    crossover_strategy = np.random.choice(['single', 'two', 'uniform'])
+                    
+                    if crossover_strategy == 'single' and len(parent1) > 1 and len(parent2) > 1:
+                        point = np.random.randint(1, min(len(parent1), len(parent2)))
+                        child1 = parent1[:point] + parent2[point:]
+                        child2 = parent2[:point] + parent1[point:]
+                    elif crossover_strategy == 'two' and len(parent1) > 2 and len(parent2) > 2:
+                        point1 = np.random.randint(1, min(len(parent1), len(parent2))//2)
+                        point2 = np.random.randint(point1+1, min(len(parent1), len(parent2)))
+                        child1 = parent1[:point1] + parent2[point1:point2] + parent1[point2:]
+                        child2 = parent2[:point1] + parent1[point1:point2] + parent2[point2:]
+                    else:  # uniform crossover
+                        child1_chars = []
+                        child2_chars = []
+                        min_len = min(len(parent1), len(parent2))
+                        for i in range(min_len):
+                            if np.random.random() < 0.5:
+                                child1_chars.append(parent1[i])
+                                child2_chars.append(parent2[i])
+                            else:
+                                child1_chars.append(parent2[i])
+                                child2_chars.append(parent1[i])
+                        child1 = ''.join(child1_chars) + parent1[min_len:] + parent2[min_len:]
+                        child2 = ''.join(child2_chars) + parent2[min_len:] + parent1[min_len:]
+                    
+                    # Enhanced mutation
+                    for child in [child1, child2]:
+                        if np.random.random() < base_mutation_rate:
+                            mutation_type = np.random.choice(['replace', 'insert', 'delete', 'swap', 'case'])
+                            
+                            if mutation_type == 'replace' and len(child) > 0:
+                                pos = np.random.randint(len(child))
+                                child = child[:pos] + np.random.choice(list(charset)) + child[pos+1:]
+                            elif mutation_type == 'insert' and len(child) < 15:
+                                pos = np.random.randint(len(child) + 1)
+                                child = child[:pos] + np.random.choice(list(charset)) + child[pos:]
+                            elif mutation_type == 'delete' and len(child) > 3:
+                                pos = np.random.randint(len(child))
+                                child = child[:pos] + child[pos+1:]
+                            elif mutation_type == 'swap' and len(child) >= 2:
+                                pos1, pos2 = np.random.choice(len(child), 2, replace=False)
+                                chars = list(child)
+                                chars[pos1], chars[pos2] = chars[pos2], chars[pos1]
+                                child = ''.join(chars)
+                            elif mutation_type == 'case' and any(c.isalpha() for c in child):
+                                pos = np.random.randint(len(child))
+                                if child[pos].isalpha():
+                                    new_char = child[pos].upper() if child[pos].islower() else child[pos].lower()
+                                    child = child[:pos] + new_char + child[pos+1:]
                         
-                        # Mutation
-                        if np.random.random() < 0.3:
-                            pos = np.random.randint(len(child1))
-                            child1 = child1[:pos] + np.random.choice(list(charset)) + child1[pos+1:]
-                            self.log(f"  Mutation: replaced char in '{child1}'")
-                        if np.random.random() < 0.3:
-                            pos = np.random.randint(len(child2))
-                            child2 = child2[:pos] + np.random.choice(list(charset)) + child2[pos+1:]
-                            self.log(f"  Mutation: replaced char in '{child2}'")
-                        
-                        new_population.extend([child1, child2])
+                        new_population.append(child)
                 else:
-                    # Mutation only
+                    # Mutation-only reproduction
                     child = parent1
-                    if np.random.random() < 0.5:
-                        # Character mutation
-                        pos = np.random.randint(len(child))
-                        old_char = child[pos]
-                        new_char = np.random.choice(list(charset))
-                        child = child[:pos] + new_char + child[pos+1:]
-                        self.log(f"  Mutation: '{parent1}' -> '{child}' (replaced '{old_char}' with '{new_char}')")
-                    elif np.random.random() < 0.3:
-                        # Add character
-                        pos = np.random.randint(len(child) + 1)
-                        new_char = np.random.choice(list(charset))
-                        child = child[:pos] + new_char + child[pos:]
-                        self.log(f"  Mutation: '{parent1}' -> '{child}' (added '{new_char}')")
-                    elif len(child) > 4 and np.random.random() < 0.2:
-                        # Remove character
-                        pos = np.random.randint(len(child))
-                        removed_char = child[pos]
-                        child = child[:pos] + child[pos+1:]
-                        self.log(f"  Mutation: '{parent1}' -> '{child}' (removed '{removed_char}')")
+                    if np.random.random() < base_mutation_rate:
+                        mutation_type = np.random.choice(['replace', 'insert', 'delete', 'swap', 'case'])
+                        # ... (same mutation logic as above)
                     
                     new_population.append(child)
             
             population = new_population[:population_size]
+            
+            # Diversity injection if stagnating
+            if stagnation_count > 10 and generation % 10 == 0:
+                self.log("Injecting diversity into population")
+                # Replace worst 20% with new random individuals
+                worst_indices = np.argsort(fitness_scores)[:population_size//5]
+                for idx in worst_indices:
+                    length = np.random.randint(4, 12)
+                    new_individual = ''.join(np.random.choice(list(charset), length))
+                    population[idx] = new_individual
         
         elapsed = time.time() - start_time
-        
-        # Store evolution data for analysis
         self.log_data['genetic_evolution'] = evolution_data
         
-        # Return best candidate found
         if best_password and self.hasher.hash_to_hex(best_password) == target_hash:
             self.log(f"SUCCESS: Found '{best_password}' after {attempts} attempts in {elapsed:.2f}s")
             return best_password, attempts, elapsed
@@ -322,16 +296,16 @@ class ImprovedQuantumPasswordCracker:
             self.log(f"FAILED: Best candidate '{best_password}' after {attempts} attempts in {elapsed:.2f}s")
             return None, attempts, elapsed
     
-    def improved_qaoa_approach(self, target_hash: str, max_iter: int = 200,
+    def enhanced_qaoa_approach(self, target_hash: str, max_iter: int = 500,
                              timeout: int = 30) -> Tuple[str, int, float]:
         """
-        Improved approach using direct optimization on password characters
+        ENHANCED QAOA approach with multiple search strategies and better local search
         """
-        self.log(f"Starting improved QAOA approach (max iterations: {max_iter})")
+        self.log(f"Starting ENHANCED QAOA approach (max iterations: {max_iter})")
         start_time = time.time()
         attempts = 0
         
-        charset = "abcdefghijklmnopqrstuvwxyz0123456789"
+        charset = "abcdefghijklmnopqrstuvwxyz0123456789!@#$%&*"
         
         # Store optimization data
         optimization_data = {
@@ -340,275 +314,269 @@ class ImprovedQuantumPasswordCracker:
             'best_score': [],
             'current_password': [],
             'best_password': [],
-            'operation': []
+            'operation': [],
+            'strategy': []
         }
         
         def evaluate_password(password):
-            """Evaluate how close this password's hash is to target"""
+            """Enhanced evaluation with multiple criteria"""
+            if not password or len(password) < 2 or len(password) > 20:
+                return -10000
+                
             candidate_hash = self.hasher.hash_password(password)
             target_hash_int = int(target_hash, 16)
-            score = -abs(candidate_hash - target_hash_int)  # Negative because we maximize
+            
+            # Exact match bonus
+            if candidate_hash == target_hash_int:
+                return 1000000
+            
+            # Hash similarity (primary)
+            hash_diff = abs(candidate_hash - target_hash_int)
+            
+            # Length preference (common lengths 4-12)
+            length_penalty = abs(len(password) - 8) * 100
+            
+            # Character diversity bonus
+            char_bonus = 0
+            if any(c.isdigit() for c in password):
+                char_bonus += 50
+            if any(c in "!@#$%&*" for c in password):
+                char_bonus += 100
+            
+            score = -hash_diff - length_penalty + char_bonus
             return score
         
-        # Start with common passwords and mutate
-        common_passwords = ["password", "admin", "hello", "test", "secret"]
-        current_password = np.random.choice(common_passwords)
-        current_score = evaluate_password(current_password)
-        attempts += 1
+        # MULTIPLE STARTING STRATEGIES
+        starting_passwords = [
+            # Common passwords
+            "password", "admin", "hello", "test", "user", "secret", "123456",
+            # Short passwords
+            "a", "ab", "abc", "1", "12", "123",
+            # Pattern-based
+            "pass", "admin1", "test123", "hello1",
+            # Random reasonable lengths
+            ''.join(np.random.choice(list("abcdefghijklmnopqrstuvwxyz"), 6)),
+            ''.join(np.random.choice(list("abcdefghijklmnopqrstuvwxyz0123456789"), 8))
+        ]
         
-        self.log(f"Initial password: '{current_password}' (score: {current_score:.0f})")
+        # Try all starting points quickly first
+        self.log("Trying multiple starting strategies...")
+        for start_pwd in starting_passwords:
+            attempts += 1
+            if self.hasher.hash_to_hex(start_pwd) == target_hash:
+                elapsed = time.time() - start_time
+                self.log(f"SUCCESS: Starting password '{start_pwd}' matched!")
+                return start_pwd, attempts, elapsed
         
-        if self.hasher.hash_to_hex(current_password) == target_hash:
-            elapsed = time.time() - start_time
-            self.log(f"SUCCESS: Initial password matched after {attempts} attempts in {elapsed:.2f}s")
-            return current_password, attempts, elapsed
+        # Select best starting point based on fitness
+        start_fitness = [evaluate_password(pwd) for pwd in starting_passwords]
+        best_start_idx = np.argmax(start_fitness)
+        current_password = starting_passwords[best_start_idx]
+        current_score = start_fitness[best_start_idx]
+        
+        self.log(f"Best starting password: '{current_password}' (score: {current_score:.0f})")
         
         best_password = current_password
         best_score = current_score
         
-        # Store initial state
-        optimization_data['iterations'].append(0)
-        optimization_data['current_score'].append(current_score)
-        optimization_data['best_score'].append(best_score)
-        optimization_data['current_password'].append(current_password)
-        optimization_data['best_password'].append(best_password)
-        optimization_data['operation'].append("initial")
+        # Search strategies
+        strategies = ['local_search', 'pattern_based', 'hash_guided', 'random_walk']
+        strategy_weights = [0.4, 0.3, 0.2, 0.1]  # Preference for local search
         
-        # Local search with restarts
         for iteration in range(1, max_iter + 1):
             if time.time() - start_time > timeout:
                 self.log(f"Timeout at iteration {iteration}/{max_iter}")
                 break
                 
-            # Mutate current password
-            new_password = list(current_password)
+            # Adaptive strategy selection
+            if iteration % 50 == 0:
+                # Every 50 iterations, rebalance strategy weights
+                if best_score > -1000:  # If we're making progress
+                    strategy_weights = [0.5, 0.3, 0.15, 0.05]  # Focus on local search
+                else:
+                    strategy_weights = [0.2, 0.3, 0.3, 0.2]  # Explore more
+            
+            strategy = np.random.choice(strategies, p=strategy_weights)
+            new_password = current_password
             operation = ""
             
-            # Choose mutation type
-            mutation_type = np.random.choice(['replace', 'insert', 'delete', 'swap'])
+            if strategy == 'local_search':
+                # Enhanced local mutations
+                mutation_type = np.random.choice(['replace', 'insert', 'delete', 'swap', 'append', 'prepend'])
+                
+                if mutation_type == 'replace' and len(new_password) > 0:
+                    pos = np.random.randint(len(new_password))
+                    new_char = np.random.choice(list(charset))
+                    new_password = new_password[:pos] + new_char + new_password[pos+1:]
+                    operation = f"local: replace at {pos}"
+                    
+                elif mutation_type == 'insert' and len(new_password) < 15:
+                    pos = np.random.randint(len(new_password) + 1)
+                    new_char = np.random.choice(list(charset))
+                    new_password = new_password[:pos] + new_char + new_password[pos:]
+                    operation = f"local: insert at {pos}"
+                    
+                elif mutation_type == 'delete' and len(new_password) > 2:
+                    pos = np.random.randint(len(new_password))
+                    new_password = new_password[:pos] + new_password[pos+1:]
+                    operation = f"local: delete at {pos}"
+                    
+                elif mutation_type == 'swap' and len(new_password) >= 2:
+                    pos1, pos2 = np.random.choice(len(new_password), 2, replace=False)
+                    chars = list(new_password)
+                    chars[pos1], chars[pos2] = chars[pos2], chars[pos1]
+                    new_password = ''.join(chars)
+                    operation = f"local: swap {pos1}<->{pos2}"
+                    
+                elif mutation_type == 'append' and len(new_password) < 15:
+                    new_char = np.random.choice(list(charset))
+                    new_password = new_password + new_char
+                    operation = f"local: append '{new_char}'"
+                    
+                elif mutation_type == 'prepend' and len(new_password) < 15:
+                    new_char = np.random.choice(list(charset))
+                    new_password = new_char + new_password
+                    operation = f"local: prepend '{new_char}'"
             
-            if mutation_type == 'replace' and len(new_password) > 0:
-                pos = np.random.randint(len(new_password))
-                old_char = new_password[pos]
-                new_char = np.random.choice(list(charset))
-                new_password[pos] = new_char
-                operation = f"replace '{old_char}' with '{new_char}' at position {pos}"
+            elif strategy == 'pattern_based':
+                # Pattern-based generation
+                common_patterns = [
+                    "pass", "admin", "test", "user", "hello", "secret",
+                    "123", "1234", "12345", "!", "!!", "1", "0", "00"
+                ]
                 
-            elif mutation_type == 'insert' and len(new_password) < 12:
-                pos = np.random.randint(len(new_password) + 1)
-                new_char = np.random.choice(list(charset))
-                new_password.insert(pos, new_char)
-                operation = f"insert '{new_char}' at position {pos}"
-                
-            elif mutation_type == 'delete' and len(new_password) > 4:
-                pos = np.random.randint(len(new_password))
-                removed_char = new_password.pop(pos)
-                operation = f"delete '{removed_char}' at position {pos}"
-                
-            elif mutation_type == 'swap' and len(new_password) >= 2:
-                pos1, pos2 = np.random.choice(len(new_password), 2, replace=False)
-                new_password[pos1], new_password[pos2] = new_password[pos2], new_password[pos1]
-                operation = f"swap positions {pos1} and {pos2}"
+                if np.random.random() < 0.5:
+                    # Combine patterns
+                    pattern1 = np.random.choice(common_patterns)
+                    pattern2 = np.random.choice(common_patterns)
+                    new_password = pattern1 + pattern2
+                    operation = f"pattern: {pattern1} + {pattern2}"
+                else:
+                    # Add pattern to current password
+                    pattern = np.random.choice(common_patterns)
+                    if np.random.random() < 0.5:
+                        new_password = current_password + pattern
+                        operation = f"pattern: append {pattern}"
+                    else:
+                        new_password = pattern + current_password
+                        operation = f"pattern: prepend {pattern}"
             
-            new_password_str = ''.join(new_password)
+            elif strategy == 'hash_guided':
+                # Use hash bits to guide search (simplified)
+                target_bits = bin(int(target_hash, 16))[2:].zfill(32)
+                bit_pattern = target_bits[:6]  # Use first 6 bits to influence length
+                suggested_length = int(bit_pattern, 2) % 10 + 3  # Length between 3-12
+                
+                if abs(len(current_password) - suggested_length) > 2:
+                    # Adjust length toward suggestion
+                    if len(current_password) < suggested_length:
+                        # Add characters
+                        chars_to_add = suggested_length - len(current_password)
+                        for _ in range(chars_to_add):
+                            pos = np.random.randint(len(new_password) + 1)
+                            new_char = np.random.choice(list(charset))
+                            new_password = new_password[:pos] + new_char + new_password[pos:]
+                    else:
+                        # Remove characters
+                        chars_to_remove = len(current_password) - suggested_length
+                        for _ in range(chars_to_remove):
+                            if len(new_password) > 3:
+                                pos = np.random.randint(len(new_password))
+                                new_password = new_password[:pos] + new_password[pos+1:]
+                
+                operation = f"hash_guided: target_len={suggested_length}"
+            
+            else:  # random_walk
+                # Complete random restart
+                length = np.random.randint(3, 13)
+                new_password = ''.join(np.random.choice(list(charset), length))
+                operation = f"random_walk: new length {length}"
+            
             attempts += 1
+            new_score = evaluate_password(new_password)
             
-            # Evaluate
-            new_score = evaluate_password(new_password_str)
+            # Enhanced acceptance criteria
+            temperature = max(0.1, 1.0 - (iteration / max_iter))
+            accept_probability = np.exp((new_score - current_score) / temperature)
             
-            # Accept if better, or sometimes accept worse (simulated annealing)
-            temperature = 1.0 - (iteration / max_iter)  # Cooling schedule
-            accept_probability = np.exp((new_score - current_score) / max(0.1, temperature))
-            
-            accepted = new_score > current_score or np.random.random() < accept_probability
-            
-            if accepted:
-                old_password = current_password
-                current_password = new_password_str
+            if new_score > current_score or np.random.random() < accept_probability:
+                current_password = new_password
                 current_score = new_score
-                operation += f" - ACCEPTED (score: {new_score:.0f})"
+                operation += f" - ACCEPTED (Δ={new_score-current_score:.0f})"
                 
                 if new_score > best_score:
-                    best_password = new_password_str
+                    best_password = new_password
                     best_score = new_score
                     operation += " - NEW BEST"
             else:
-                operation += f" - REJECTED (score: {new_score:.0f})"
+                operation += f" - REJECTED (Δ={new_score-current_score:.0f})"
             
-            # Store iteration data
+            # Store data
             optimization_data['iterations'].append(iteration)
             optimization_data['current_score'].append(current_score)
             optimization_data['best_score'].append(best_score)
             optimization_data['current_password'].append(current_password)
             optimization_data['best_password'].append(best_password)
             optimization_data['operation'].append(operation)
+            optimization_data['strategy'].append(strategy)
             
             # Log progress
-            if iteration % 20 == 0 or iteration <= 5:
-                self.log(f"Iteration {iteration:3d}: current='{current_password}' "
-                        f"(score: {current_score:6.0f}) best='{best_password}' "
-                        f"(score: {best_score:6.0f}) - {operation.split(' - ')[0]}")
+            if iteration % 25 == 0 or iteration <= 10:
+                self.log(f"Iter {iteration:3d}: {strategy:12} "
+                        f"current='{current_password}' ({current_score:6.0f}) "
+                        f"best='{best_password}' ({best_score:6.0f})")
             
             # Check for solution
             if self.hasher.hash_to_hex(current_password) == target_hash:
                 elapsed = time.time() - start_time
-                self.log(f"SUCCESS: Found '{current_password}' at iteration {iteration} after {attempts} attempts in {elapsed:.2f}s")
+                self.log(f"SUCCESS: Found '{current_password}' at iteration {iteration}!")
                 return current_password, attempts, elapsed
             
-            # Random restart occasionally
-            if iteration % 25 == 0:
-                old_password = current_password
-                current_password = np.random.choice(common_passwords)
+            # Strategic restart if stuck
+            if iteration % 100 == 0 and best_score < -5000:
+                self.log("Strategic restart: exploring new region")
+                length = np.random.randint(3, 10)
+                current_password = ''.join(np.random.choice(list(charset), length))
                 current_score = evaluate_password(current_password)
                 attempts += 1
-                self.log(f"RESTART: '{old_password}' -> '{current_password}' (score: {current_score:.0f})")
         
         elapsed = time.time() - start_time
-        
-        # Store optimization data for analysis
         self.log_data['qaoa_optimization'] = optimization_data
         
-        # Check best candidate
         if best_password and self.hasher.hash_to_hex(best_password) == target_hash:
-            self.log(f"SUCCESS: Found '{best_password}' after {attempts} attempts in {elapsed:.2f}s")
+            self.log(f"SUCCESS: Found '{best_password}' after {attempts} attempts!")
             return best_password, attempts, elapsed
         else:
-            self.log(f"FAILED: Best candidate '{best_password}' (score: {best_score:.0f}) after {attempts} attempts in {elapsed:.2f}s")
+            self.log(f"FAILED: Best candidate '{best_password}' (score: {best_score:.0f})")
             return None, attempts, elapsed
 
-    def plot_evolution(self, method: str = "genetic"):
-        """Plot the evolution of the optimization process"""
-        if method not in self.log_data:
-            print(f"No evolution data available for {method}")
-            return
+# Update the demo to use enhanced methods
+def enhanced_batch_demo():
+    """Run batch demo with enhanced methods"""
+    cracker = EnhancedQuantumPasswordCracker(verbose=False)
+    
+    test_passwords = ["password", "admin", "hello", "test123", "secret", "123456", "letmein", "welcome", "he"]
+    
+    print("ENHANCED METHODS BATCH TEST")
+    print("=" * 50)
+    
+    for password in test_passwords:
+        print(f"\nCracking: '{password}'")
+        target_hash = cracker.hasher.hash_to_hex(password)
         
-        data = self.log_data[method]
+        # Test enhanced genetic
+        print("  Enhanced Genetic...", end=" ", flush=True)
+        result = cracker.enhanced_genetic_algorithm(target_hash, timeout=15)
+        found, attempts, time_taken = result
+        status = "SUCCESS" if found == password else "FAILED"
+        print(f"{status} ({time_taken:.2f}s, {attempts} attempts)")
         
-        fig, axes = plt.subplots(2, 2, figsize=(15, 10))
-        fig.suptitle(f'{method.upper()} Optimization Evolution', fontsize=16)
-        
-        if method == "genetic":
-            # Genetic algorithm plots
-            axes[0, 0].plot(data['generations'], data['best_fitness'], 'b-', label='Best Fitness')
-            axes[0, 0].plot(data['generations'], data['avg_fitness'], 'r--', label='Average Fitness')
-            axes[0, 0].set_xlabel('Generation')
-            axes[0, 0].set_ylabel('Fitness')
-            axes[0, 0].set_title('Fitness Evolution')
-            axes[0, 0].legend()
-            axes[0, 0].grid(True)
-            
-            axes[0, 1].plot(data['generations'], data['diversity'], 'g-')
-            axes[0, 1].set_xlabel('Generation')
-            axes[0, 1].set_ylabel('Diversity')
-            axes[0, 1].set_title('Population Diversity')
-            axes[0, 1].grid(True)
-            
-            # Password length evolution
-            password_lengths = [len(pwd) for pwd in data['best_password']]
-            axes[1, 0].plot(data['generations'], password_lengths, 'purple', marker='o')
-            axes[1, 0].set_xlabel('Generation')
-            axes[1, 0].set_ylabel('Password Length')
-            axes[1, 0].set_title('Best Password Length Evolution')
-            axes[1, 0].grid(True)
-            
-            # Show some best passwords
-            axes[1, 1].axis('off')
-            best_passwords_text = "Best Passwords by Generation:\n"
-            for i in range(0, len(data['generations']), max(1, len(data['generations'])//10)):
-                gen = data['generations'][i]
-                pwd = data['best_password'][i]
-                fitness_val = data['best_fitness'][i]
-                best_passwords_text += f"Gen {gen:3d}: '{pwd}' (fitness: {fitness_val:.0f})\n"
-            axes[1, 1].text(0.1, 0.9, best_passwords_text, transform=axes[1, 1].transAxes, 
-                           fontfamily='monospace', verticalalignment='top')
-        
-        elif method == "qaoa":
-            # QAOA optimization plots
-            axes[0, 0].plot(data['iterations'], data['best_score'], 'b-', label='Best Score')
-            axes[0, 0].plot(data['iterations'], data['current_score'], 'r--', label='Current Score')
-            axes[0, 0].set_xlabel('Iteration')
-            axes[0, 0].set_ylabel('Score')
-            axes[0, 0].set_title('Score Evolution')
-            axes[0, 0].legend()
-            axes[0, 0].grid(True)
-            
-            # Password length evolution
-            password_lengths = [len(pwd) for pwd in data['current_password']]
-            axes[0, 1].plot(data['iterations'], password_lengths, 'purple', marker='o')
-            axes[0, 1].set_xlabel('Iteration')
-            axes[0, 1].set_ylabel('Password Length')
-            axes[0, 1].set_title('Current Password Length')
-            axes[0, 1].grid(True)
-            
-            # Show operations
-            axes[1, 0].axis('off')
-            operations_text = "Recent Operations:\n"
-            start_idx = max(0, len(data['operations']) - 15)
-            for i in range(start_idx, len(data['operations'])):
-                op = data['operations'][i]
-                if op:  # Only show non-empty operations
-                    operations_text += f"Iter {data['iterations'][i]:3d}: {op}\n"
-            axes[1, 0].text(0.1, 0.9, operations_text, transform=axes[1, 0].transAxes, 
-                           fontfamily='monospace', fontsize=8, verticalalignment='top')
-            
-            # Show best passwords
-            axes[1, 1].axis('off')
-            best_passwords_text = "Best Passwords by Iteration:\n"
-            for i in range(0, len(data['iterations']), max(1, len(data['iterations'])//10)):
-                iter_num = data['iterations'][i]
-                pwd = data['best_password'][i]
-                score = data['best_score'][i]
-                best_passwords_text += f"Iter {iter_num:3d}: '{pwd}' (score: {score:.0f})\n"
-            axes[1, 1].text(0.1, 0.9, best_passwords_text, transform=axes[1, 1].transAxes, 
-                           fontfamily='monospace', verticalalignment='top')
-        
-        plt.tight_layout()
-        plt.savefig(f'{method}_evolution.png', dpi=150, bbox_inches='tight')
-        plt.show()
-
-# Test function to demonstrate the logging
-def test_with_logging():
-    """Test the enhanced cracker with detailed logging"""
-    cracker = ImprovedQuantumPasswordCracker(verbose=True)
-    
-    test_password = "admin"
-    target_hash = cracker.hasher.hash_to_hex(test_password)
-    
-    print(f"Testing password: '{test_password}'")
-    print(f"Target hash: {target_hash}")
-    print("\n" + "="*60)
-    
-    # Test genetic algorithm with logging
-    print("\nGENETIC ALGORITHM (with detailed logging):")
-    print("-" * 40)
-    result = cracker.improved_genetic_algorithm(target_hash, timeout=10)
-    password_found, attempts, time_taken = result
-    
-    if password_found == test_password:
-        print(f"SUCCESS: Found '{password_found}'")
-    else:
-        print(f"FAILED: Found '{password_found}'")
-    
-    # Plot evolution if data is available
-    if 'genetic_evolution' in cracker.log_data:
-        cracker.plot_evolution("genetic")
-    
-    print("\n" + "="*60)
-    
-    # Test QAOA with logging
-    print("\nQAOA OPTIMIZATION (with detailed logging):")
-    print("-" * 40)
-    result = cracker.improved_qaoa_approach(target_hash, timeout=10)
-    password_found, attempts, time_taken = result
-    
-    if password_found == test_password:
-        print(f"SUCCESS: Found '{password_found}'")
-    else:
-        print(f"FAILED: Found '{password_found}'")
-    
-    # Plot evolution if data is available
-    if 'qaoa_optimization' in cracker.log_data:
-        cracker.plot_evolution("qaoa")
+        # Test enhanced QAOA
+        print("  Enhanced QAOA......", end=" ", flush=True)
+        result = cracker.enhanced_qaoa_approach(target_hash, timeout=15)
+        found, attempts, time_taken = result
+        status = "SUCCESS" if found == password else "FAILED"
+        print(f"{status} ({time_taken:.2f}s, {attempts} attempts)")
 
 if __name__ == "__main__":
-    test_with_logging()
+    enhanced_batch_demo()

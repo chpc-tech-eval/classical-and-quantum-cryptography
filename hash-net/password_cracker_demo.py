@@ -169,7 +169,7 @@ class PasswordCrackerDemo:
         
         test_passwords = [
             "password", "admin", "hello", "test123", 
-            "secret", "123456", "letmein", "welcome"
+            "secret", "123456", "letmein", "welcome", "securepass12", "crac", "paaaass"
         ]
         
         methods_to_test = [
@@ -183,7 +183,7 @@ class PasswordCrackerDemo:
         for i, pwd in enumerate(test_passwords, 1):
             print(f"  {i}. {pwd}")
         
-        timeout = 15
+        timeout = 5
         print(f"\nTesting {len(methods_to_test)} methods with {timeout} second timeout per method...")
         print("-" * 50)
         
