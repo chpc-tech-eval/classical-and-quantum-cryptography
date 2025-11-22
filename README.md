@@ -1,7 +1,5 @@
 # Classical and Quantum Cryptography
 
----
-
 ## Overview
 
 This project provides a comprehensive comparison of **classical** and **quantum** approaches to cryptographic problems, specifically:
