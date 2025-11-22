@@ -3,16 +3,16 @@ import torch
 import torch.nn as nn
 
 class PasswordRNN(nn.Module):
-    def __init__(self, vocab_size, embed_dim=128, hidden_dim=256, num_layers=2, dropout=0.2):
+    def __init__(self, vocab_size, embed_dim=256, hidden_dim=512, num_layers=3, dropout=0.3):
         super().__init__()
         self.vocab_size = vocab_size
         self.hidden_dim = hidden_dim
         self.num_layers = num_layers
         
-        # Embedding layer
+        # Embedding layer with larger dimension
         self.embed = nn.Embedding(vocab_size, embed_dim)
         
-        # Multi-layer LSTM with dropout
+        # Multi-layer LSTM with dropout and batch normalization
         self.lstm = nn.LSTM(
             embed_dim, 
             hidden_dim, 
@@ -22,24 +22,41 @@ class PasswordRNN(nn.Module):
             bidirectional=False
         )
         
+        # Layer normalization for better training stability
+        self.layer_norm = nn.LayerNorm(hidden_dim)
+        
         # Dropout for regularization
         self.dropout = nn.Dropout(dropout)
         
-        # Output layer
-        self.fc = nn.Linear(hidden_dim, vocab_size)
+        # Additional fully connected layer for more capacity
+        self.fc1 = nn.Linear(hidden_dim, hidden_dim // 2)
+        self.fc2 = nn.Linear(hidden_dim // 2, vocab_size)
+        
+        # Activation
+        self.relu = nn.ReLU()
         
     def forward(self, x, hidden=None):
+        batch_size = x.size(0)
+        
         # Embedding
         x = self.embed(x)
         
         # LSTM
         lstm_out, hidden = self.lstm(x, hidden)
         
-        # Apply dropout to last output
-        lstm_out = self.dropout(lstm_out[:, -1, :])
+        # Use the last output only
+        lstm_out = lstm_out[:, -1, :]
+        
+        # Layer normalization and dropout
+        lstm_out = self.layer_norm(lstm_out)
+        lstm_out = self.dropout(lstm_out)
+        
+        # Additional fully connected layers
+        fc_out = self.relu(self.fc1(lstm_out))
+        fc_out = self.dropout(fc_out)
         
         # Final output
-        out = self.fc(lstm_out)
+        out = self.fc2(fc_out)
         
         return out, hidden
     
