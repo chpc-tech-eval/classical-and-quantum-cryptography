@@ -1,0 +1,24 @@
+======================================================================
+SHOR'S ALGORITHM ANALYSIS REPORT
+======================================================================
+
+Total Runs: 27
+Success Rate: 77.8%
+
+Numbers Factored:
+  N=15: 3/3 successful (100.0%)
+  N=21: 3/3 successful (100.0%)
+  N=33: 3/3 successful (100.0%)
+  N=35: 2/3 successful (66.7%)
+  N=51: 3/3 successful (100.0%)
+  N=55: 2/3 successful (66.7%)
+  N=77: 1/3 successful (33.3%)
+  N=91: 2/3 successful (66.7%)
+  N=143: 2/3 successful (66.7%)
+
+Performance Metrics (Successful Runs):
+  Average qubits: 17.7
+  Average circuit depth: 15
+  Average execution time: 233.53s
+  Fastest run: 0.39s
+  Slowest run: 2189.95s
