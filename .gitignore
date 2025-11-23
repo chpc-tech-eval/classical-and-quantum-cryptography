@@ -1,1 +1,8 @@
 *password_hashes.txt
+*log.txt
+*.csv
+*my_credentials.py
+*results*
+__pycache__
+#*shor_results.csv
+*env
