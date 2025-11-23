@@ -537,7 +537,7 @@ def main():
             sys.exit(1)
         
         try:
-            service = QiskitRuntimeService(channel="ibm_quantum")
+            service = QiskitRuntimeService(channel="ibm_quantum_platform")
         except Exception as e:
             print(f"[ERROR] Could not connect to IBM Quantum: {e}")
             sys.exit(1)

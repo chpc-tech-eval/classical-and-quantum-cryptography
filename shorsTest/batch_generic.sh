@@ -1,16 +1,15 @@
 #!/bin/bash
-# batch_actual.sh
-# Comprehensive batch testing for shor_actual.py
-# Tests all valid numbers (10, 12, 14, 15) with all valid bases
+# batch_generic.sh
+# Batch testing for shor_generic.py
 
 echo "======================================================================"
-echo "ACTUAL SHOR'S ALGORITHM - COMPREHENSIVE BATCH RUN"
+echo "GENERIC SHOR'S ALGORITHM - BATCH RUN"
 echo "======================================================================"
 echo ""
 
 # Parse arguments
 USE_IBM=false
-SHOTS=4096
+SHOTS=2048
 BACKEND=""
 GPU=false
 
@@ -40,15 +39,14 @@ while [[ $# -gt 0 ]]; do
             echo "Options:"
             echo "  --use_ibm           Use IBM Quantum hardware"
             echo "  --backend NAME      Specific IBM backend (implies --use_ibm)"
-            echo "  --shots N           Number of shots (default: 4096)"
+            echo "  --shots N           Number of shots (default: 2048)"
             echo "  --gpu               Use GPU acceleration"
             echo ""
             echo "Examples:"
-            echo "  ./batch_actual.sh                                    # CPU simulation"
-            echo "  ./batch_actual.sh --gpu                              # GPU simulation"
-            echo "  ./batch_actual.sh --use_ibm                          # Auto-select backend"
-            echo "  ./batch_actual.sh --backend ibm_brisbane             # Use specific backend"
-            echo "  ./batch_actual.sh --backend ibm_kyoto --shots 8192   # Custom backend + shots"
+            echo "  ./batch_generic.sh                           # CPU simulation"
+            echo "  ./batch_generic.sh --gpu                     # GPU simulation"
+            echo "  ./batch_generic.sh --use_ibm                 # Quantum hardware"
+            echo "  ./batch_generic.sh --backend ibm_brisbane    # Specific backend"
             exit 1
             ;;
     esac
@@ -69,12 +67,12 @@ fi
 # Find next available results folder
 mkdir -p results
 n=1
-while [ -d "results/actual_${MODE}_${n}" ]; do
+while [ -d "results/generic_${MODE}_${n}" ]; do
     n=$((n + 1))
 done
 
 # Create directories
-RESULTS_DIR="results/actual_${MODE}_${n}"
+RESULTS_DIR="results/generic_${MODE}_${n}"
 CIRCUITS_DIR="$RESULTS_DIR/circuits"
 mkdir -p "$RESULTS_DIR"
 mkdir -p "$CIRCUITS_DIR"
@@ -87,24 +85,11 @@ echo ""
 CSV_FILE="$RESULTS_DIR/results.csv"
 LOG_FILE="$RESULTS_DIR/batch_log.txt"
 
-# Test configuration (removed N=6)
-declare -A TEST_CASES=(
-    [10]="3 7 9"
-    [12]="5 7 11"
-    [14]="3 5 9 11 13"
-    [15]="2 4 7 8 11 13"
-)
-
-# Count total tests
-TOTAL_TESTS=0
-for N in "${!TEST_CASES[@]}"; do
-    for a in ${TEST_CASES[$N]}; do
-        ((TOTAL_TESTS++))
-    done
-done
+# Test cases
+GENERIC_TEST_CASES=(15 21 33 35)
 
 # Build command flags
-CMD_FLAGS="--shots $SHOTS --csv $CSV_FILE --circuits_dir $CIRCUITS_DIR"
+CMD_FLAGS="--shots $SHOTS --max_attempts 1 --csv $CSV_FILE --circuits_dir $CIRCUITS_DIR"
 
 if [ "$USE_IBM" = true ]; then
     CMD_FLAGS="$CMD_FLAGS --use_ibm"
@@ -117,50 +102,49 @@ fi
 
 # Log configuration
 echo "======================================================================" | tee "$LOG_FILE"
-echo "BATCH CONFIGURATION" | tee -a "$LOG_FILE"
+echo "GENERIC SHOR'S ALGORITHM - $MODE_NAME" | tee -a "$LOG_FILE"
 echo "======================================================================" | tee -a "$LOG_FILE"
 echo "Mode: $MODE_NAME" | tee -a "$LOG_FILE"
+echo "Shots: $SHOTS" | tee -a "$LOG_FILE"
 if [ -n "$BACKEND" ]; then
     echo "Backend: $BACKEND" | tee -a "$LOG_FILE"
 fi
-echo "Shots: $SHOTS" | tee -a "$LOG_FILE"
-echo "Total tests: $TOTAL_TESTS" | tee -a "$LOG_FILE"
+echo "Test cases: ${GENERIC_TEST_CASES[@]}" | tee -a "$LOG_FILE"
 echo "======================================================================" | tee -a "$LOG_FILE"
 echo "" | tee -a "$LOG_FILE"
 
-# Run all tests
+# Run tests
 TEST_NUM=0
+TOTAL_TESTS=${#GENERIC_TEST_CASES[@]}
 SUCCESSES=0
 FAILURES=0
 
-for N in $(echo "${!TEST_CASES[@]}" | tr ' ' '\n' | sort -n); do
-    for a in ${TEST_CASES[$N]}; do
-        ((TEST_NUM++))
-        
-        echo "======================================================================" | tee -a "$LOG_FILE"
-        echo "[TEST $TEST_NUM/$TOTAL_TESTS] N=$N, a=$a" | tee -a "$LOG_FILE"
-        echo "======================================================================" | tee -a "$LOG_FILE"
-        
-        START=$(date +%s)
-        
-        python3 shor_actual.py --N $N --a $a $CMD_FLAGS 2>&1 | tee -a "$LOG_FILE"
-        EXIT_CODE=${PIPESTATUS[0]}
-        
-        if [ $EXIT_CODE -eq 0 ]; then
-            ((SUCCESSES++))
-            RESULT="✅ SUCCESS"
-        else
-            ((FAILURES++))
-            RESULT="❌ FAILED"
-        fi
-        
-        END=$(date +%s)
-        ELAPSED=$((END - START))
-        
-        echo "" | tee -a "$LOG_FILE"
-        echo "⏱️  Test time: ${ELAPSED}s - $RESULT" | tee -a "$LOG_FILE"
-        echo "" | tee -a "$LOG_FILE"
-    done
+for N in "${GENERIC_TEST_CASES[@]}"; do
+    ((TEST_NUM++))
+    
+    echo "======================================================================" | tee -a "$LOG_FILE"
+    echo "[TEST $TEST_NUM/$TOTAL_TESTS] N=$N" | tee -a "$LOG_FILE"
+    echo "======================================================================" | tee -a "$LOG_FILE"
+    
+    START=$(date +%s)
+    
+    python3 shor_generic.py --N $N $CMD_FLAGS 2>&1 | tee -a "$LOG_FILE"
+    EXIT_CODE=${PIPESTATUS[0]}
+    
+    if [ $EXIT_CODE -eq 0 ]; then
+        ((SUCCESSES++))
+        RESULT="✅ SUCCESS"
+    else
+        ((FAILURES++))
+        RESULT="❌ FAILED"
+    fi
+    
+    END=$(date +%s)
+    ELAPSED=$((END - START))
+    
+    echo "" | tee -a "$LOG_FILE"
+    echo "⏱️  Test time: ${ELAPSED}s - $RESULT" | tee -a "$LOG_FILE"
+    echo "" | tee -a "$LOG_FILE"
 done
 
 # Final summary
@@ -184,5 +168,4 @@ if [ $FAILURES -gt 0 ]; then
     echo "" | tee -a "$LOG_FILE"
     echo "⚠️  FAILED TESTS:" | tee -a "$LOG_FILE"
     echo "See log file for details: $LOG_FILE" | tee -a "$LOG_FILE"
-    echo "Or check CSV for 'success=False' entries" | tee -a "$LOG_FILE"
 fi

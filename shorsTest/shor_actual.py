@@ -3,26 +3,22 @@
 shor_actual.py
 
 TARGETED implementation of Shor's algorithm for small composite numbers up to 15.
-Automatically tests ALL valid numbers (6, 10, 12, 14, 15) that can be factored 
-using 4 target qubits.
+Tests valid numbers (10, 12, 14, 15) that can be factored using 4 target qubits.
 
 ⚠️  STABILITY: LIMITED TO 4 TARGET QUBITS ONLY ⚠️
 
 Usage:
-    # Run all tests (simulation - default)
-    python3 shor_actual.py
+    # Single test - simulation (default)
+    python3 shor_actual.py --N 15 --a 2
     
-    # Run with custom shots
-    python3 shor_actual.py --shots 8192
+    # Run with custom shots and counting qubits
+    python3 shor_actual.py --N 15 --a 2 --shots 8192 --n_count 12
     
     # Run on IBM Quantum hardware
-    python3 shor_actual.py --use_ibm --backend ibm_torino
+    python3 shor_actual.py --N 15 --a 2 --use_ibm --backend ibm_torino
     
-    # Test only specific number
-    python3 shor_actual.py --only 15
-    
-    # Save circuits to PNG
-    python3 shor_actual.py --circuits_dir circuits
+    # Save circuit diagram
+    python3 shor_actual.py --N 15 --a 2 --circuits_dir circuits
 """
 
 import argparse
@@ -128,7 +124,7 @@ def c_amod_n(a, N, n_target):
     return qc.to_gate()
 
 
-def shor_circuit(N, a, n_count=8):
+def shor_circuit(N, a, n_count=12):
     """
     Build Shor's algorithm circuit for ACTUAL implementation.
     
@@ -137,7 +133,7 @@ def shor_circuit(N, a, n_count=8):
     Args:
         N: Number to factor (must be in VALID_NUMBERS)
         a: Base (must be coprime to N)
-        n_count: Number of counting qubits (default: 8)
+        n_count: Number of counting qubits (default: 12)
     
     Returns:
         QuantumCircuit: Complete Shor's circuit
@@ -291,6 +287,15 @@ def run_shor_single(N, a, backend, shots, n_count, use_ibm, circuits_dir=None, m
     }
     
     # ========================================================================
+    # PREPROCESSING - Compute classical period for validation
+    # ========================================================================
+    classical_r = classical_order_finding(a, N)
+    log_data['preprocessing'] = {
+        'classical_period': classical_r
+    }
+    print(f"\n[0/5] Classical reference period: r = {classical_r}")
+    
+    # ========================================================================
     # BUILD CIRCUIT
     # ========================================================================
     circuit_start = datetime.now()
@@ -417,7 +422,24 @@ def run_shor_single(N, a, backend, shots, n_count, use_ibm, circuits_dir=None, m
     successful_periods.sort(key=lambda x: x[1], reverse=True)
     r, count, measured_value, phase = successful_periods[0]
     
-    print(f"      Found period r={r}")
+    print(f"      Found quantum period r={r}")
+    
+    # ========================================================================
+    # VALIDATE AGAINST CLASSICAL PERIOD
+    # ========================================================================
+    classical_r = log_data['preprocessing'].get('classical_period')
+    matches_classical = (r == classical_r) if classical_r else False
+    
+    log_data['postprocessing']['period_validation'] = {
+        'quantum_period': r,
+        'classical_period': classical_r,
+        'matches_classical': matches_classical
+    }
+    
+    if matches_classical:
+        print(f"      ✓ Matches classical period (r = {classical_r})")
+    else:
+        print(f"      ⚠ Differs from classical period (classical r={classical_r})")
     
     # ========================================================================
     # EXTRACT FACTORS
@@ -466,7 +488,7 @@ def run_shor_single(N, a, backend, shots, n_count, use_ibm, circuits_dir=None, m
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Targeted Shor's algorithm for numbers 6-15 (4 qubits)",
+        description="Targeted Shor's algorithm for numbers 10-15 (4 qubits)",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -484,14 +506,14 @@ Examples:
         """
     )
     parser.add_argument('--N', type=int, required=True, 
-                        choices=[6, 10, 12, 14, 15],
-                        help='Number to factor (6, 10, 12, 14, or 15)')
+                        choices=[10, 12, 14, 15],
+                        help='Number to factor (10, 12, 14, or 15)')
     parser.add_argument('--a', type=int, default=None,
                         help='Base (default: first valid base for N)')
     parser.add_argument('--shots', type=int, default=4096,
                         help='Number of measurements (default: 4096)')
-    parser.add_argument('--n_count', type=int, default=8,
-                        help='Number of counting qubits (default: 8)')
+    parser.add_argument('--n_count', type=int, default=12,
+                        help='Number of counting qubits (default: 12)')
     parser.add_argument('--use_ibm', action='store_true',
                         help='Run on IBM Quantum hardware (default: simulation)')
     parser.add_argument('--backend', type=str, default=None,
