@@ -16,7 +16,7 @@ python3 -m venv qvenv
 
 ### 2. Activate the Virtual Environment
 ```bash
-source qvenv/bin/activate  # Note: fixed typo from 'qenv' to 'qvenv'
+source qvenv/bin/activate
 ```
 
 ### 3. Install Dependencies
