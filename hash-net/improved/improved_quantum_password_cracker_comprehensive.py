@@ -744,10 +744,10 @@ class CrackStatistics:
         df = pd.DataFrame(df_data)
         
         # Set up the plotting style
-        plt.style.use('seaborn-v0_8')
+        plt.style.use('default')
         fig, axes = plt.subplots(2, 2, figsize=(16, 12))
         fig.suptitle('Password Cracking Performance Analysis\nEnhanced Visualization', 
-                    fontsize=18, fontweight='bold', pad=20)
+                    fontsize=18, fontweight='bold')
         
         # Color scheme
         colors = ['#2E86AB', '#A23B72', '#F18F01', '#C73E1D']
@@ -808,12 +808,12 @@ class CrackStatistics:
             patch.set_facecolor(color)
             patch.set_alpha(0.7)
         
-        # Add median values as text annotations
+        # Add median values as text annotations (FIXED: removed parameter)
         for i, (method, data) in enumerate(zip(df['method'].unique(), attempts_data)):
             median_val = np.median(data)
             axes[1, 0].text(i + 1, median_val * 1.2, f'Med: {median_val:.0f}', 
                            ha='center', va='bottom', fontweight='bold', fontsize=9,
-                           bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.8))
+                           bbox=dict(boxstyle="round", facecolor="white", alpha=0.8))
         
         # Plot 4: Time vs Attempts with trend lines (Enhanced)
         success_mask = df['success'] == True
@@ -867,7 +867,7 @@ class CrackStatistics:
             correlation = df['attempts'].corr(df['time_taken'])
             axes[1, 1].text(0.02, 0.98, f'Correlation: {correlation:.3f}', 
                            transform=axes[1, 1].transAxes, fontsize=11,
-                           bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.8),
+                           bbox=dict(boxstyle="round", facecolor="white", alpha=0.8),
                            verticalalignment='top')
         
         # Add overall statistics as text box
@@ -882,7 +882,7 @@ Overall Statistics:
         
         # Add statistics text box to the figure
         fig.text(0.02, 0.02, overall_stats, fontsize=10,
-                bbox=dict(boxstyle="round,pad=0.5", facecolor="lightgray", alpha=0.8),
+                bbox=dict(boxstyle="round", facecolor="lightgray", alpha=0.8),
                 verticalalignment='bottom')
         
         plt.tight_layout()
@@ -916,7 +916,7 @@ Overall Statistics:
         # Create comprehensive analysis figure
         fig, axes = plt.subplots(2, 2, figsize=(16, 12))
         fig.suptitle('Comprehensive Password Cracking Analysis', 
-                    fontsize=18, fontweight='bold', pad=20)
+                    fontsize=18, fontweight='bold')
         
         colors = ['#2E86AB', '#A23B72', '#F18F01', '#C73E1D']
         
@@ -964,7 +964,7 @@ Overall Statistics:
             axes[0, 1].set_xticklabels([str(bin) for bin in complexity_success.index], rotation=45)
             axes[0, 1].grid(True, alpha=0.3, axis='y')
             
-            # Add data labels
+            # Add data labels (FIXED: removed parameter)
             for bar, rate in zip(bars, complexity_success.values):
                 height = bar.get_height()
                 axes[0, 1].text(bar.get_x() + bar.get_width()/2., height + 1,
@@ -1036,7 +1036,7 @@ Overall Statistics:
             axes[1, 1].set_ylabel('Cumulative Successful Cracks', fontsize=12, fontweight='bold')
             axes[1, 1].grid(True, alpha=0.3)
             
-            # Add final value annotation
+            # Add final value annotation (FIXED: removed parameter)
             final_success = cumulative_success.iloc[-1]
             final_time = df_sorted['time_taken'].iloc[-1]
             axes[1, 1].annotate(f'Final: {final_success} successes', 
@@ -1044,7 +1044,7 @@ Overall Statistics:
                               xytext=(final_time * 0.7, final_success * 0.8),
                               arrowprops=dict(arrowstyle='->', color='black'),
                               fontweight='bold', fontsize=10,
-                              bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.8))
+                              bbox=dict(boxstyle="round", facecolor="white", alpha=0.8))
         
         plt.tight_layout()
         
