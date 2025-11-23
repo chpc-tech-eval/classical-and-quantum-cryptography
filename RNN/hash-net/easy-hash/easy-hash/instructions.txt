@@ -1,0 +1,361 @@
+I keep all the python stuff in a virtual environment, so id first open that up
+
+source ~/pytorch_env/bin/activate
+
+
+Training and running the actual model
+
+1) generate some training data, any number of passwords, must output to passwords.txt
+							
+python generate_training_data.py --count 10000 --output passwords.txt
+
+
+2) Train the model to crack hashes of the simple hashing algorithm
+
+python qaoa_train.py
+
+3) Test the model to check if it can actually crack the hash function
+
+python hash_generate.py
+
+
+Clanker-assisted documentation becuase I forgor
+
+Hash Cracker RNN - User Manual
+Overview
+
+The Hash Cracker RNN is a neural network system that learns to generate passwords that produce specific target hashes. It reframes password recovery as a Quantum Approximate Optimization Algorithm (QAOA) problem, where the objective is to find passwords that minimize the difference between their hash and a target hash.
+System Architecture
+Core Components
+text
+
+hash-net/
+├── hash_model.py          # Neural network architecture
+├── hash_data_prep.py      # Data preprocessing and pair generation
+├── simple_hash.py         # Hash function implementation
+├── qaoa_train.py          # Main training script
+├── generate_training_data.py # Password dataset generator
+└── verify_model.py        # Model verification utility
+
+Quick Start Guide
+1. Generate Training Data
+bash
+
+# Generate 10,000 realistic passwords
+# very important, output to passwords.txt
+python generate_training_data.py --count 10000 --output passwords.txt
+
+2. Train the Model
+bash
+
+# Basic training
+python qaoa_train.py
+
+3. Generate/Crack Hashes
+bash
+
+# Basic generation
+python hash_generate.py
+
+# Smart generation with multiple strategies
+python smart_generate.py
+
+Detailed Component Documentation
+1. Neural Network Architecture (hash_model.py)
+HashToPasswordRNN Class
+
+    Purpose: Core RNN that takes target hashes and generates password sequences
+
+    Architecture:
+
+        Hash encoder: Processes 128-bit hash into 128-dimensional context
+
+        Character embeddings: 64-dimensional character representations
+
+        2-layer LSTM: 256 hidden units per layer
+
+        Output layer: Predicts next character probabilities
+
+Key Features:
+
+    Multi-layer LSTM for learning hierarchical patterns
+
+    Hash context integration at every time step
+
+    Dropout regularization (0.2) for preventing overfitting
+
+2. Hash Function (simple_hash.py)
+SimpleHashFunction Class
+
+    Purpose: Provides both actual SHA-256 hashing and differentiable approximations
+
+    Methods:
+
+        actual_hash(password): Real SHA-256 hash → 128-bit binary vector
+
+        differentiable_hash(logits): Differentiable approximation for training
+
+        init_projection(vocab_size): Initializes learned hash projection
+
+Hash Representation:
+
+    128-bit binary vectors
+
+    Converted from SHA-256 hexdigest
+
+    Compatible with neural network processing
+
+3. Data Preparation (hash_data_prep.py)
+Training Pair Generation
+
+    Input: List of passwords from passwords.txt
+
+    Output: (target_hash, character_sequence, target_char) tuples
+
+    Process:
+
+        Filters passwords (length ≥ 8 characters)
+
+        Creates sliding window sequences
+
+        Generates target hash for each password
+
+        Creates character-to-index mappings
+
+Key Parameters:
+
+    seq_length: 10 (sequence length for training)
+
+    Character vocabulary: 72 unique characters
+
+    Training pairs: ~44,617 from 8,383 passwords
+
+4. Training System (qaoa_train.py / enhanced_train.py)
+QAOA-Inspired Loss Function
+python
+
+Total Loss = α * Hash_Loss + β * Char_Loss + γ * Diversity_Loss
+
+    Hash_Loss: MSE between target and generated hash (α = 1.0)
+
+    Char_Loss: Cross-entropy for character prediction (β = 0.1-0.2)
+
+    Diversity_Loss: Penalizes character repetition (γ = 0.05)
+
+Training Parameters:
+
+    Batch Size: 64
+
+    Learning Rate: 0.005 with ReduceLROnPlateau scheduling
+
+    Epochs: 100-150
+
+    Gradient Clipping: 1.0
+
+5. Generation System (hash_generate.py / smart_generate.py)
+Generation Strategies:
+
+    Temperature Sampling: Controls randomness (0.3-1.1)
+
+    Multiple Start Characters: ['p', 'a', 's', '1', 'q', 'l', 'm', 'd']
+
+    Repetition Prevention: Early stopping on repeated patterns
+
+    Multiple Attempts: 10+ attempts per hash with different parameters
+
+Performance Characteristics
+Current Performance (Based on Testing)
+
+    Hash Similarity: 40-60%
+
+    Exact Matches: 0% (current implementation)
+
+    Generation Speed: ~100ms per attempt
+
+    Training Time: 30-60 minutes for 150 epochs
+
+Key Metrics
+
+    Similarity Score: Percentage of matching hash bits
+
+    Exact Match: True password recovery
+
+    Semantic Quality: Meaningfulness of generated passwords
+
+Advanced Usage
+Custom Training
+python
+
+from enhanced_train import train_enhanced_hash_cracker
+
+# Custom parameters
+train_enhanced_hash_cracker(
+    epochs=200,
+    batch_size=128,
+    learning_rate=0.001
+)
+
+Custom Hash Cracking
+python
+
+from smart_generate import smart_crack_hash
+from simple_hash import SimpleHashFunction
+
+hash_function = SimpleHashFunction()
+target_hash = hash_function.actual_hash("mypassword123")
+
+cracked, similarity = smart_crack_hash(
+    target_hash,
+    max_attempts=20,
+    max_length=20
+)
+
+Model Verification
+bash
+
+python verify_model.py
+
+Troubleshooting Guide
+Common Issues and Solutions
+1. "No training pairs created"
+
+    Cause: Empty or short passwords in passwords.txt
+
+    Solution: Regenerate with generate_training_data.py --count 10000
+
+2. "Device mismatch errors"
+
+    Cause: CPU/GPU tensor conflicts
+
+    Solution: All components use device parameter consistently
+
+3. "Model not learning"
+
+    Symptoms: Low hash similarity, repetitive outputs
+
+    Solutions:
+
+        Use enhanced_train.py with curriculum learning
+
+        Increase training epochs
+
+        Adjust loss weights (α, β, γ)
+
+4. "Poor generation quality"
+
+    Solutions:
+
+        Use smart_generate.py with multiple strategies
+
+        Experiment with temperature parameters
+
+        Try different start characters
+
+Performance Optimization
+For Better Results:
+
+    Increase Training Data: 50,000+ passwords
+
+    Longer Training: 200+ epochs
+
+    Model Size: Increase hidden dimensions (512)
+
+    Advanced Architectures: Transformer-based models
+
+For Faster Training:
+
+    Reduce Sequence Length: 8 instead of 10
+
+    Smaller Batches: 32 instead of 64
+
+    Mixed Precision: FP16 training
+
+Technical Specifications
+System Requirements
+
+    Python: 3.8+
+
+    PyTorch: 2.0+
+
+    GPU: Recommended (CUDA support)
+
+    RAM: 8GB+ for training
+
+    Storage: 1GB+ for models and data
+
+Model Specifications
+
+    Parameters: ~1.5 million
+
+    Input Dimension: 128 (hash) + 72 (vocabulary)
+
+    Output Dimension: 72 (character probabilities)
+
+    Model Size: ~6MB (trained)
+
+Research Foundation
+QAOA Inspiration
+
+The system treats password recovery as an optimization problem:
+text
+
+minimize |hash(generated_password) - target_hash|
+
+Key Innovations
+
+    Differentiable Hashing: Learned hash approximations for training
+
+    Hash Context Integration: Target hash guides every generation step
+
+    Multi-Objective Loss: Balances hash matching and password likelihood
+
+Ethical Usage Guidelines
+Intended Use
+
+    Cybersecurity research and education
+
+    Password strength evaluation
+
+    Defensive security training
+
+Prohibited Use
+
+    Unauthorized password cracking
+
+    Malicious hacking activities
+
+    Privacy violations
+
+Responsible Disclosure
+
+This system demonstrates AI capabilities in password security. Use responsibly and in compliance with applicable laws and ethical guidelines.
+Future Development
+Planned Enhancements
+
+    Transformer Architecture: Better sequence modeling
+
+    Reinforcement Learning: Improved hash matching
+
+    Ensemble Methods: Multiple model voting
+
+    Quantum Integration: Actual QAOA implementation
+
+Research Directions
+
+    Adversarial training against the cracker
+
+    Explainable AI for password vulnerability analysis
+
+    Cross-hash function generalization
+
+Support and Contact
+
+For technical support or research collaboration:
+
+    Documentation: This manual
+
+    Code: Repository documentation
+
+    Issues: GitHub issue tracker
+
+This manual documents version 1.0 of the Hash Cracker RNN system. Specifications subject to change with ongoing development.

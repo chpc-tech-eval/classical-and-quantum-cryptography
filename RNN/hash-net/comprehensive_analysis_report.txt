@@ -1,0 +1,93 @@
+COMPREHENSIVE PASSWORD CRACKING ANALYSIS REPORT
+============================================================
+
+EXECUTIVE SUMMARY:
+--------------------
+Total Tests: 60
+Successful Cracks: 8
+Overall Success Rate: 13.3%
+
+METHOD PERFORMANCE:
+--------------------
+BRUTE_FORCE:
+  Success Rate: 0.0%
+  Avg Time: 13.62s
+  Avg Attempts: 6222500
+
+DICTIONARY:
+  Success Rate: 53.3%
+  Avg Time: 0.00s
+  Avg Attempts: 202
+
+GENETIC:
+  Success Rate: 0.0%
+  Avg Time: 0.28s
+  Avg Attempts: 5000
+
+QAOA:
+  Success Rate: 0.0%
+  Avg Time: 3.81s
+  Avg Attempts: 100
+
+DETAILED RESULTS:
+--------------------
+Easy (Dictionary)    | password        | dictionary   | CRACKED  |  0.00s |      1 attempts
+Easy (Dictionary)    | password        | genetic      | FAILED   |  0.29s |   5000 attempts
+Easy (Dictionary)    | password        | qaoa         | FAILED   |  4.11s |    100 attempts
+Easy (Dictionary)    | password        | brute_force  | FAILED   | 15.00s | 6734138 attempts
+Easy (Dictionary)    | admin           | dictionary   | CRACKED  |  0.00s |     33 attempts
+Easy (Dictionary)    | admin           | genetic      | FAILED   |  0.29s |   5000 attempts
+Easy (Dictionary)    | admin           | qaoa         | FAILED   |  3.73s |    100 attempts
+Easy (Dictionary)    | admin           | brute_force  | FAILED   |  3.53s | 1760785 attempts
+Easy (Dictionary)    | hello           | dictionary   | CRACKED  |  0.00s |    129 attempts
+Easy (Dictionary)    | hello           | genetic      | FAILED   |  0.28s |   5000 attempts
+Easy (Dictionary)    | hello           | qaoa         | FAILED   |  3.83s |    100 attempts
+Easy (Dictionary)    | hello           | brute_force  | FAILED   |  5.84s | 2786030 attempts
+Easy (Dictionary)    | secret          | dictionary   | CRACKED  |  0.00s |    161 attempts
+Easy (Dictionary)    | secret          | genetic      | FAILED   |  0.28s |   5000 attempts
+Easy (Dictionary)    | secret          | qaoa         | FAILED   |  3.79s |    100 attempts
+Easy (Dictionary)    | secret          | brute_force  | FAILED   | 15.00s | 6838135 attempts
+Easy (Dictionary)    | test123         | dictionary   | CRACKED  |  0.00s |     67 attempts
+Easy (Dictionary)    | test123         | genetic      | FAILED   |  0.26s |   5000 attempts
+Easy (Dictionary)    | test123         | qaoa         | FAILED   |  4.01s |    100 attempts
+Easy (Dictionary)    | test123         | brute_force  | FAILED   | 15.00s | 6811742 attempts
+Medium (Common Patterns) | hello123        | dictionary   | CRACKED  |  0.00s |    131 attempts
+Medium (Common Patterns) | hello123        | genetic      | FAILED   |  0.29s |   5000 attempts
+Medium (Common Patterns) | hello123        | qaoa         | FAILED   |  3.38s |    100 attempts
+Medium (Common Patterns) | hello123        | brute_force  | FAILED   | 15.00s | 6874874 attempts
+Medium (Common Patterns) | admin2024       | dictionary   | CRACKED  |  0.00s |     40 attempts
+Medium (Common Patterns) | admin2024       | genetic      | FAILED   |  0.28s |   5000 attempts
+Medium (Common Patterns) | admin2024       | qaoa         | FAILED   |  3.68s |    100 attempts
+Medium (Common Patterns) | admin2024       | brute_force  | FAILED   | 15.00s | 6834798 attempts
+Medium (Common Patterns) | Password1       | dictionary   | FAILED   |  0.00s |    320 attempts
+Medium (Common Patterns) | Password1       | genetic      | FAILED   |  0.30s |   5000 attempts
+Medium (Common Patterns) | Password1       | qaoa         | FAILED   |  3.73s |    100 attempts
+Medium (Common Patterns) | Password1       | brute_force  | FAILED   | 15.00s | 6834605 attempts
+Medium (Common Patterns) | welcome!        | dictionary   | CRACKED  |  0.00s |    228 attempts
+Medium (Common Patterns) | welcome!        | genetic      | FAILED   |  0.29s |   5000 attempts
+Medium (Common Patterns) | welcome!        | qaoa         | FAILED   |  3.65s |    100 attempts
+Medium (Common Patterns) | welcome!        | brute_force  | FAILED   | 15.00s | 6862953 attempts
+Medium (Common Patterns) | summer2023      | dictionary   | FAILED   |  0.00s |    320 attempts
+Medium (Common Patterns) | summer2023      | genetic      | FAILED   |  0.28s |   5000 attempts
+Medium (Common Patterns) | summer2023      | qaoa         | FAILED   |  3.59s |    100 attempts
+Medium (Common Patterns) | summer2023      | brute_force  | FAILED   | 15.00s | 6818764 attempts
+Hard (Random)        | xq9j7m          | dictionary   | FAILED   |  0.00s |    320 attempts
+Hard (Random)        | xq9j7m          | genetic      | FAILED   |  0.29s |   5000 attempts
+Hard (Random)        | xq9j7m          | qaoa         | FAILED   |  3.84s |    100 attempts
+Hard (Random)        | xq9j7m          | brute_force  | FAILED   | 15.00s | 6827472 attempts
+Hard (Random)        | p@ssw0rd!       | dictionary   | FAILED   |  0.00s |    320 attempts
+Hard (Random)        | p@ssw0rd!       | genetic      | FAILED   |  0.29s |   5000 attempts
+Hard (Random)        | p@ssw0rd!       | qaoa         | FAILED   |  3.97s |    100 attempts
+Hard (Random)        | p@ssw0rd!       | brute_force  | FAILED   | 15.00s | 6846155 attempts
+Hard (Random)        | K8#vf2q         | dictionary   | FAILED   |  0.00s |    320 attempts
+Hard (Random)        | K8#vf2q         | genetic      | FAILED   |  0.27s |   5000 attempts
+Hard (Random)        | K8#vf2q         | qaoa         | FAILED   |  4.13s |    100 attempts
+Hard (Random)        | K8#vf2q         | brute_force  | FAILED   | 15.00s | 6849839 attempts
+Hard (Random)        | mYp@ss123       | dictionary   | FAILED   |  0.00s |    320 attempts
+Hard (Random)        | mYp@ss123       | genetic      | FAILED   |  0.29s |   5000 attempts
+Hard (Random)        | mYp@ss123       | qaoa         | FAILED   |  3.85s |    100 attempts
+Hard (Random)        | mYp@ss123       | brute_force  | FAILED   | 15.00s | 6853325 attempts
+Hard (Random)        | g7$kL9@m        | dictionary   | FAILED   |  0.00s |    320 attempts
+Hard (Random)        | g7$kL9@m        | genetic      | FAILED   |  0.28s |   5000 attempts
+Hard (Random)        | g7$kL9@m        | qaoa         | FAILED   |  3.86s |    100 attempts
+Hard (Random)        | g7$kL9@m        | brute_force  | FAILED   | 15.00s | 6803890 attempts
