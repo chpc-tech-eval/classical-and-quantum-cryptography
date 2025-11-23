@@ -202,14 +202,14 @@ class EnhancedPasswordCrackerDemo:
         # Test passwords of varying complexity
         test_passwords = [
             # Simple passwords
-            "a", "ab", "abc", "test", "pass", "1234",
+            "a", "ab", "abc", "test", "pass", "1234", "pas",
             # Common passwords  
-            "password", "admin", "hello", "secret", "123456",
+            "password", "admin", "hello", "secret", "123456", "13579",
             # Moderate complexity
-            "Password123", "Admin2024", "HelloWorld", "Test123!",
+            "Password123", "Admin2024", "HelloWorld", "Test123!", "PW0RD"
             # High complexity (previously problematic)
             "securepass12", "crac", "paaaass", "MySecurePass123!",
-            "Quantum2024", "Test@123", "hello_world"
+            "Quantum2024", "Test@123", "hello_world", "difficultpass"
         ]
         
         methods = ["dictionary", "genetic", "quantum", "hybrid"]

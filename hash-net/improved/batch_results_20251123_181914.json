@@ -1,0 +1,1447 @@
+{
+  "performance_report": {
+    "overall_success_rate": 60.0,
+    "total_attempts": 4289273,
+    "total_time": 90.66838645935059,
+    "average_time": 0.9066838645935058,
+    "method_breakdown": {
+      "Dictionary Attack": {
+        "success_rate": 78.04878048780488,
+        "average_attempts": 1957.0487804878048,
+        "average_time": 0.016122620280196027,
+        "total_successes": 32,
+        "total_attempts": 80239
+      },
+      "Genetic Algorithm": {
+        "success_rate": 60.0,
+        "average_attempts": 80521.0,
+        "average_time": 1.4841150188446044,
+        "total_successes": 15,
+        "total_attempts": 2013025
+      },
+      "Quantum Search": {
+        "success_rate": 52.0,
+        "average_attempts": 7242.8,
+        "average_time": 0.4490574645996094,
+        "total_successes": 13,
+        "total_attempts": 181070
+      },
+      "Hybrid": {
+        "success_rate": 0.0,
+        "average_attempts": 223882.11111111112,
+        "average_time": 4.630894104639689,
+        "total_successes": 0,
+        "total_attempts": 2014939
+      }
+    }
+  },
+  "attack_history": [
+    {
+      "timestamp": 1763921863.679023,
+      "method": "Dictionary Attack",
+      "success": true,
+      "attempts": 25,
+      "time_taken": 0.0002758502960205078,
+      "password_length": 1,
+      "password_complexity": 17.0
+    },
+    {
+      "timestamp": 1763921863.6836848,
+      "method": "Genetic Algorithm",
+      "success": true,
+      "attempts": 401,
+      "time_taken": 0.00458979606628418,
+      "password_length": 1,
+      "password_complexity": 17.0
+    },
+    {
+      "timestamp": 1763921863.683952,
+      "method": "Quantum Search",
+      "success": true,
+      "attempts": 26,
+      "time_taken": 0.00023126602172851562,
+      "password_length": 1,
+      "password_complexity": 17.0
+    },
+    {
+      "timestamp": 1763921863.6841528,
+      "method": "Dictionary Attack",
+      "success": true,
+      "attempts": 25,
+      "time_taken": 0.00014543533325195312,
+      "password_length": 1,
+      "password_complexity": 17.0
+    },
+    {
+      "timestamp": 1763921863.68436,
+      "method": "Dictionary Attack",
+      "success": true,
+      "attempts": 26,
+      "time_taken": 0.00014543533325195312,
+      "password_length": 2,
+      "password_complexity": 24.0
+    },
+    {
+      "timestamp": 1763921863.6890886,
+      "method": "Genetic Algorithm",
+      "success": true,
+      "attempts": 401,
+      "time_taken": 0.004687786102294922,
+      "password_length": 2,
+      "password_complexity": 24.0
+    },
+    {
+      "timestamp": 1763921863.6893475,
+      "method": "Quantum Search",
+      "success": true,
+      "attempts": 26,
+      "time_taken": 0.00022602081298828125,
+      "password_length": 2,
+      "password_complexity": 24.0
+    },
+    {
+      "timestamp": 1763921863.6895454,
+      "method": "Dictionary Attack",
+      "success": true,
+      "attempts": 26,
+      "time_taken": 0.0001513957977294922,
+      "password_length": 2,
+      "password_complexity": 24.0
+    },
+    {
+      "timestamp": 1763921863.689755,
+      "method": "Dictionary Attack",
+      "success": true,
+      "attempts": 27,
+      "time_taken": 0.00015616416931152344,
+      "password_length": 3,
+      "password_complexity": 31.0
+    },
+    {
+      "timestamp": 1763921863.6944401,
+      "method": "Genetic Algorithm",
+      "success": true,
+      "attempts": 401,
+      "time_taken": 0.004644870758056641,
+      "password_length": 3,
+      "password_complexity": 31.0
+    },
+    {
+      "timestamp": 1763921863.69472,
+      "method": "Quantum Search",
+      "success": true,
+      "attempts": 26,
+      "time_taken": 0.0002455711364746094,
+      "password_length": 3,
+      "password_complexity": 31.0
+    },
+    {
+      "timestamp": 1763921863.694914,
+      "method": "Dictionary Attack",
+      "success": true,
+      "attempts": 27,
+      "time_taken": 0.0001475811004638672,
+      "password_length": 3,
+      "password_complexity": 31.0
+    },
+    {
+      "timestamp": 1763921863.694992,
+      "method": "Dictionary Attack",
+      "success": true,
+      "attempts": 5,
+      "time_taken": 2.956390380859375e-05,
+      "password_length": 4,
+      "password_complexity": 33.0
+    },
+    {
+      "timestamp": 1763921863.6991892,
+      "method": "Genetic Algorithm",
+      "success": true,
+      "attempts": 401,
+      "time_taken": 0.00415802001953125,
+      "password_length": 4,
+      "password_complexity": 33.0
+    },
+    {
+      "timestamp": 1763921863.6994004,
+      "method": "Quantum Search",
+      "success": true,
+      "attempts": 26,
+      "time_taken": 0.00017762184143066406,
+      "password_length": 4,
+      "password_complexity": 33.0
+    },
+    {
+      "timestamp": 1763921863.6994734,
+      "method": "Dictionary Attack",
+      "success": true,
+      "attempts": 5,
+      "time_taken": 3.170967102050781e-05,
+      "password_length": 4,
+      "password_complexity": 33.0
+    },
+    {
+      "timestamp": 1763921863.699615,
+      "method": "Dictionary Attack",
+      "success": true,
+      "attempts": 14,
+      "time_taken": 7.867813110351562e-05,
+      "password_length": 4,
+      "password_complexity": 33.0
+    },
+    {
+      "timestamp": 1763921863.703236,
+      "method": "Genetic Algorithm",
+      "success": true,
+      "attempts": 401,
+      "time_taken": 0.003580808639526367,
+      "password_length": 4,
+      "password_complexity": 33.0
+    },
+    {
+      "timestamp": 1763921864.6577036,
+      "method": "Quantum Search",
+      "success": false,
+      "attempts": 15061,
+      "time_taken": 0.9544222354888916,
+      "password_length": 4,
+      "password_complexity": 33.0
+    },
+    {
+      "timestamp": 1763921864.6578352,
+      "method": "Dictionary Attack",
+      "success": true,
+      "attempts": 14,
+      "time_taken": 8.20159912109375e-05,
+      "password_length": 4,
+      "password_complexity": 33.0
+    },
+    {
+      "timestamp": 1763921864.658058,
+      "method": "Dictionary Attack",
+      "success": true,
+      "attempts": 28,
+      "time_taken": 0.00015783309936523438,
+      "password_length": 4,
+      "password_complexity": 38.0
+    },
+    {
+      "timestamp": 1763921864.6621377,
+      "method": "Genetic Algorithm",
+      "success": true,
+      "attempts": 401,
+      "time_taken": 0.004036426544189453,
+      "password_length": 4,
+      "password_complexity": 38.0
+    },
+    {
+      "timestamp": 1763921865.7794278,
+      "method": "Quantum Search",
+      "success": false,
+      "attempts": 15061,
+      "time_taken": 1.1172447204589844,
+      "password_length": 4,
+      "password_complexity": 38.0
+    },
+    {
+      "timestamp": 1763921865.7796602,
+      "method": "Dictionary Attack",
+      "success": true,
+      "attempts": 28,
+      "time_taken": 0.00016117095947265625,
+      "password_length": 4,
+      "password_complexity": 38.0
+    },
+    {
+      "timestamp": 1763921865.7798526,
+      "method": "Dictionary Attack",
+      "success": true,
+      "attempts": 21,
+      "time_taken": 0.00011897087097167969,
+      "password_length": 3,
+      "password_complexity": 31.0
+    },
+    {
+      "timestamp": 1763921865.784803,
+      "method": "Genetic Algorithm",
+      "success": true,
+      "attempts": 401,
+      "time_taken": 0.004908561706542969,
+      "password_length": 3,
+      "password_complexity": 31.0
+    },
+    {
+      "timestamp": 1763921865.7850416,
+      "method": "Quantum Search",
+      "success": true,
+      "attempts": 26,
+      "time_taken": 0.0001990795135498047,
+      "password_length": 3,
+      "password_complexity": 31.0
+    },
+    {
+      "timestamp": 1763921865.7852068,
+      "method": "Dictionary Attack",
+      "success": true,
+      "attempts": 21,
+      "time_taken": 0.00011849403381347656,
+      "password_length": 3,
+      "password_complexity": 31.0
+    },
+    {
+      "timestamp": 1763921865.7852755,
+      "method": "Dictionary Attack",
+      "success": true,
+      "attempts": 1,
+      "time_taken": 9.5367431640625e-06,
+      "password_length": 8,
+      "password_complexity": 61.0
+    },
+    {
+      "timestamp": 1763921865.789101,
+      "method": "Genetic Algorithm",
+      "success": true,
+      "attempts": 401,
+      "time_taken": 0.003782987594604492,
+      "password_length": 8,
+      "password_complexity": 61.0
+    },
+    {
+      "timestamp": 1763921865.7893078,
+      "method": "Quantum Search",
+      "success": true,
+      "attempts": 26,
+      "time_taken": 0.00017142295837402344,
+      "password_length": 8,
+      "password_complexity": 61.0
+    },
+    {
+      "timestamp": 1763921865.7893734,
+      "method": "Dictionary Attack",
+      "success": true,
+      "attempts": 1,
+      "time_taken": 1.7881393432617188e-05,
+      "password_length": 8,
+      "password_complexity": 61.0
+    },
+    {
+      "timestamp": 1763921865.7894511,
+      "method": "Dictionary Attack",
+      "success": true,
+      "attempts": 2,
+      "time_taken": 1.52587890625e-05,
+      "password_length": 5,
+      "password_complexity": 45.0
+    },
+    {
+      "timestamp": 1763921865.7943518,
+      "method": "Genetic Algorithm",
+      "success": true,
+      "attempts": 401,
+      "time_taken": 0.004858732223510742,
+      "password_length": 5,
+      "password_complexity": 45.0
+    },
+    {
+      "timestamp": 1763921865.7945712,
+      "method": "Quantum Search",
+      "success": true,
+      "attempts": 26,
+      "time_taken": 0.00018286705017089844,
+      "password_length": 5,
+      "password_complexity": 45.0
+    },
+    {
+      "timestamp": 1763921865.7946303,
+      "method": "Dictionary Attack",
+      "success": true,
+      "attempts": 2,
+      "time_taken": 1.7642974853515625e-05,
+      "password_length": 5,
+      "password_complexity": 45.0
+    },
+    {
+      "timestamp": 1763921865.794719,
+      "method": "Dictionary Attack",
+      "success": true,
+      "attempts": 3,
+      "time_taken": 1.9550323486328125e-05,
+      "password_length": 5,
+      "password_complexity": 40.0
+    },
+    {
+      "timestamp": 1763921865.7987049,
+      "method": "Genetic Algorithm",
+      "success": true,
+      "attempts": 401,
+      "time_taken": 0.003945350646972656,
+      "password_length": 5,
+      "password_complexity": 40.0
+    },
+    {
+      "timestamp": 1763921865.7989264,
+      "method": "Quantum Search",
+      "success": true,
+      "attempts": 26,
+      "time_taken": 0.00018644332885742188,
+      "password_length": 5,
+      "password_complexity": 40.0
+    },
+    {
+      "timestamp": 1763921865.7989893,
+      "method": "Dictionary Attack",
+      "success": true,
+      "attempts": 3,
+      "time_taken": 2.1696090698242188e-05,
+      "password_length": 5,
+      "password_complexity": 40.0
+    },
+    {
+      "timestamp": 1763921865.7990735,
+      "method": "Dictionary Attack",
+      "success": true,
+      "attempts": 4,
+      "time_taken": 2.5510787963867188e-05,
+      "password_length": 6,
+      "password_complexity": 47.0
+    },
+    {
+      "timestamp": 1763921865.80403,
+      "method": "Genetic Algorithm",
+      "success": true,
+      "attempts": 401,
+      "time_taken": 0.004914522171020508,
+      "password_length": 6,
+      "password_complexity": 47.0
+    },
+    {
+      "timestamp": 1763921865.8042483,
+      "method": "Quantum Search",
+      "success": true,
+      "attempts": 26,
+      "time_taken": 0.00018334388732910156,
+      "password_length": 6,
+      "password_complexity": 47.0
+    },
+    {
+      "timestamp": 1763921865.8043237,
+      "method": "Dictionary Attack",
+      "success": true,
+      "attempts": 4,
+      "time_taken": 2.86102294921875e-05,
+      "password_length": 6,
+      "password_complexity": 47.0
+    },
+    {
+      "timestamp": 1763921865.804435,
+      "method": "Dictionary Attack",
+      "success": true,
+      "attempts": 9,
+      "time_taken": 5.054473876953125e-05,
+      "password_length": 6,
+      "password_complexity": 52.0
+    },
+    {
+      "timestamp": 1763921865.8087058,
+      "method": "Genetic Algorithm",
+      "success": true,
+      "attempts": 401,
+      "time_taken": 0.0042266845703125,
+      "password_length": 6,
+      "password_complexity": 52.0
+    },
+    {
+      "timestamp": 1763921865.8089337,
+      "method": "Quantum Search",
+      "success": true,
+      "attempts": 26,
+      "time_taken": 0.00019073486328125,
+      "password_length": 6,
+      "password_complexity": 52.0
+    },
+    {
+      "timestamp": 1763921865.8090358,
+      "method": "Dictionary Attack",
+      "success": true,
+      "attempts": 9,
+      "time_taken": 5.412101745605469e-05,
+      "password_length": 6,
+      "password_complexity": 52.0
+    },
+    {
+      "timestamp": 1763921865.8708336,
+      "method": "Dictionary Attack",
+      "success": false,
+      "attempts": 7793,
+      "time_taken": 0.06173205375671387,
+      "password_length": 5,
+      "password_complexity": 45.0
+    },
+    {
+      "timestamp": 1763921869.272792,
+      "method": "Genetic Algorithm",
+      "success": false,
+      "attempts": 200701,
+      "time_taken": 3.401906728744507,
+      "password_length": 5,
+      "password_complexity": 45.0
+    },
+    {
+      "timestamp": 1763921870.2559373,
+      "method": "Quantum Search",
+      "success": false,
+      "attempts": 15061,
+      "time_taken": 0.9830877780914307,
+      "password_length": 5,
+      "password_complexity": 45.0
+    },
+    {
+      "timestamp": 1763921875.7874856,
+      "method": "Hybrid",
+      "success": false,
+      "attempts": 223555,
+      "time_taken": 5.531498432159424,
+      "password_length": 5,
+      "password_complexity": 45.0
+    },
+    {
+      "timestamp": 1763921875.7877855,
+      "method": "Dictionary Attack",
+      "success": true,
+      "attempts": 35,
+      "time_taken": 0.00020742416381835938,
+      "password_length": 11,
+      "password_complexity": 102.0
+    },
+    {
+      "timestamp": 1763921875.7918034,
+      "method": "Genetic Algorithm",
+      "success": true,
+      "attempts": 401,
+      "time_taken": 0.003969669342041016,
+      "password_length": 11,
+      "password_complexity": 102.0
+    },
+    {
+      "timestamp": 1763921875.7920966,
+      "method": "Quantum Search",
+      "success": true,
+      "attempts": 26,
+      "time_taken": 0.0002524852752685547,
+      "password_length": 11,
+      "password_complexity": 102.0
+    },
+    {
+      "timestamp": 1763921875.7923493,
+      "method": "Dictionary Attack",
+      "success": true,
+      "attempts": 35,
+      "time_taken": 0.00019502639770507812,
+      "password_length": 11,
+      "password_complexity": 102.0
+    },
+    {
+      "timestamp": 1763921875.858957,
+      "method": "Dictionary Attack",
+      "success": false,
+      "attempts": 8161,
+      "time_taken": 0.06653761863708496,
+      "password_length": 9,
+      "password_complexity": 88.0
+    },
+    {
+      "timestamp": 1763921880.1811569,
+      "method": "Genetic Algorithm",
+      "success": false,
+      "attempts": 200701,
+      "time_taken": 4.322142124176025,
+      "password_length": 9,
+      "password_complexity": 88.0
+    },
+    {
+      "timestamp": 1763921881.0309758,
+      "method": "Quantum Search",
+      "success": false,
+      "attempts": 15061,
+      "time_taken": 0.8497648239135742,
+      "password_length": 9,
+      "password_complexity": 88.0
+    },
+    {
+      "timestamp": 1763921885.5171041,
+      "method": "Hybrid",
+      "success": false,
+      "attempts": 223923,
+      "time_taken": 4.486077308654785,
+      "password_length": 9,
+      "password_complexity": 88.0
+    },
+    {
+      "timestamp": 1763921885.5875962,
+      "method": "Dictionary Attack",
+      "success": false,
+      "attempts": 8161,
+      "time_taken": 0.07041192054748535,
+      "password_length": 10,
+      "password_complexity": 75.0
+    },
+    {
+      "timestamp": 1763921889.0711453,
+      "method": "Genetic Algorithm",
+      "success": false,
+      "attempts": 200701,
+      "time_taken": 3.4834938049316406,
+      "password_length": 10,
+      "password_complexity": 75.0
+    },
+    {
+      "timestamp": 1763921890.0373666,
+      "method": "Quantum Search",
+      "success": false,
+      "attempts": 15061,
+      "time_taken": 0.9661717414855957,
+      "password_length": 10,
+      "password_complexity": 75.0
+    },
+    {
+      "timestamp": 1763921895.273555,
+      "method": "Hybrid",
+      "success": false,
+      "attempts": 223923,
+      "time_taken": 5.23613715171814,
+      "password_length": 10,
+      "password_complexity": 75.0
+    },
+    {
+      "timestamp": 1763921895.3030164,
+      "method": "Dictionary Attack",
+      "success": true,
+      "attempts": 3334,
+      "time_taken": 0.029379844665527344,
+      "password_length": 8,
+      "password_complexity": 96.0
+    },
+    {
+      "timestamp": 1763921898.9164362,
+      "method": "Genetic Algorithm",
+      "success": false,
+      "attempts": 200701,
+      "time_taken": 3.6133599281311035,
+      "password_length": 8,
+      "password_complexity": 96.0
+    },
+    {
+      "timestamp": 1763921899.68418,
+      "method": "Quantum Search",
+      "success": false,
+      "attempts": 15061,
+      "time_taken": 0.7676830291748047,
+      "password_length": 8,
+      "password_complexity": 96.0
+    },
+    {
+      "timestamp": 1763921899.7126799,
+      "method": "Dictionary Attack",
+      "success": true,
+      "attempts": 3334,
+      "time_taken": 0.028431415557861328,
+      "password_length": 8,
+      "password_complexity": 96.0
+    },
+    {
+      "timestamp": 1763921899.779463,
+      "method": "Dictionary Attack",
+      "success": false,
+      "attempts": 8161,
+      "time_taken": 0.06670665740966797,
+      "password_length": 17,
+      "password_complexity": 134.0
+    },
+    {
+      "timestamp": 1763921903.3663073,
+      "method": "Genetic Algorithm",
+      "success": false,
+      "attempts": 200701,
+      "time_taken": 3.586784839630127,
+      "password_length": 17,
+      "password_complexity": 134.0
+    },
+    {
+      "timestamp": 1763921903.8927329,
+      "method": "Quantum Search",
+      "success": false,
+      "attempts": 15061,
+      "time_taken": 0.5263726711273193,
+      "password_length": 17,
+      "password_complexity": 134.0
+    },
+    {
+      "timestamp": 1763921908.986675,
+      "method": "Hybrid",
+      "success": false,
+      "attempts": 223923,
+      "time_taken": 5.093886613845825,
+      "password_length": 17,
+      "password_complexity": 134.0
+    },
+    {
+      "timestamp": 1763921908.9868658,
+      "method": "Dictionary Attack",
+      "success": true,
+      "attempts": 22,
+      "time_taken": 0.00012111663818359375,
+      "password_length": 4,
+      "password_complexity": 33.0
+    },
+    {
+      "timestamp": 1763921908.9913502,
+      "method": "Genetic Algorithm",
+      "success": true,
+      "attempts": 401,
+      "time_taken": 0.0044422149658203125,
+      "password_length": 4,
+      "password_complexity": 33.0
+    },
+    {
+      "timestamp": 1763921908.991589,
+      "method": "Quantum Search",
+      "success": true,
+      "attempts": 26,
+      "time_taken": 0.0002028942108154297,
+      "password_length": 4,
+      "password_complexity": 33.0
+    },
+    {
+      "timestamp": 1763921908.9917731,
+      "method": "Dictionary Attack",
+      "success": true,
+      "attempts": 22,
+      "time_taken": 0.00013446807861328125,
+      "password_length": 4,
+      "password_complexity": 33.0
+    },
+    {
+      "timestamp": 1763921908.991959,
+      "method": "Dictionary Attack",
+      "success": true,
+      "attempts": 23,
+      "time_taken": 0.00012636184692382812,
+      "password_length": 7,
+      "password_complexity": 39.0
+    },
+    {
+      "timestamp": 1763921908.9961145,
+      "method": "Genetic Algorithm",
+      "success": true,
+      "attempts": 401,
+      "time_taken": 0.004111766815185547,
+      "password_length": 7,
+      "password_complexity": 39.0
+    },
+    {
+      "timestamp": 1763921908.996368,
+      "method": "Quantum Search",
+      "success": true,
+      "attempts": 26,
+      "time_taken": 0.00021696090698242188,
+      "password_length": 7,
+      "password_complexity": 39.0
+    },
+    {
+      "timestamp": 1763921908.9965594,
+      "method": "Dictionary Attack",
+      "success": true,
+      "attempts": 23,
+      "time_taken": 0.00013899803161621094,
+      "password_length": 7,
+      "password_complexity": 39.0
+    },
+    {
+      "timestamp": 1763921909.063558,
+      "method": "Dictionary Attack",
+      "success": false,
+      "attempts": 8161,
+      "time_taken": 0.0669257640838623,
+      "password_length": 16,
+      "password_complexity": 142.0
+    },
+    {
+      "timestamp": 1763921913.1631377,
+      "method": "Genetic Algorithm",
+      "success": false,
+      "attempts": 200701,
+      "time_taken": 4.099524021148682,
+      "password_length": 16,
+      "password_complexity": 142.0
+    },
+    {
+      "timestamp": 1763921914.0520449,
+      "method": "Quantum Search",
+      "success": false,
+      "attempts": 15061,
+      "time_taken": 0.8888578414916992,
+      "password_length": 16,
+      "password_complexity": 142.0
+    },
+    {
+      "timestamp": 1763921918.1268663,
+      "method": "Hybrid",
+      "success": false,
+      "attempts": 223923,
+      "time_taken": 4.074774980545044,
+      "password_length": 16,
+      "password_complexity": 142.0
+    },
+    {
+      "timestamp": 1763921918.1944308,
+      "method": "Dictionary Attack",
+      "success": false,
+      "attempts": 8161,
+      "time_taken": 0.0674889087677002,
+      "password_length": 11,
+      "password_complexity": 97.0
+    },
+    {
+      "timestamp": 1763921922.4336696,
+      "method": "Genetic Algorithm",
+      "success": false,
+      "attempts": 200701,
+      "time_taken": 4.23918080329895,
+      "password_length": 11,
+      "password_complexity": 97.0
+    },
+    {
+      "timestamp": 1763921923.6911736,
+      "method": "Quantum Search",
+      "success": false,
+      "attempts": 15061,
+      "time_taken": 1.2574570178985596,
+      "password_length": 11,
+      "password_complexity": 97.0
+    },
+    {
+      "timestamp": 1763921929.4153888,
+      "method": "Hybrid",
+      "success": false,
+      "attempts": 223923,
+      "time_taken": 5.724167108535767,
+      "password_length": 11,
+      "password_complexity": 97.0
+    },
+    {
+      "timestamp": 1763921929.482223,
+      "method": "Dictionary Attack",
+      "success": false,
+      "attempts": 8161,
+      "time_taken": 0.06676459312438965,
+      "password_length": 8,
+      "password_complexity": 96.0
+    },
+    {
+      "timestamp": 1763921933.5916266,
+      "method": "Genetic Algorithm",
+      "success": false,
+      "attempts": 200701,
+      "time_taken": 4.109352350234985,
+      "password_length": 8,
+      "password_complexity": 96.0
+    },
+    {
+      "timestamp": 1763921934.7512515,
+      "method": "Quantum Search",
+      "success": false,
+      "attempts": 15061,
+      "time_taken": 1.1595666408538818,
+      "password_length": 8,
+      "password_complexity": 96.0
+    },
+    {
+      "timestamp": 1763921938.997992,
+      "method": "Hybrid",
+      "success": false,
+      "attempts": 223923,
+      "time_taken": 4.246694326400757,
+      "password_length": 8,
+      "password_complexity": 96.0
+    },
+    {
+      "timestamp": 1763921939.0648973,
+      "method": "Dictionary Attack",
+      "success": false,
+      "attempts": 8161,
+      "time_taken": 0.06683111190795898,
+      "password_length": 11,
+      "password_complexity": 82.0
+    },
+    {
+      "timestamp": 1763921941.8278651,
+      "method": "Genetic Algorithm",
+      "success": false,
+      "attempts": 200701,
+      "time_taken": 2.7629148960113525,
+      "password_length": 11,
+      "password_complexity": 82.0
+    },
+    {
+      "timestamp": 1763921942.3722463,
+      "method": "Quantum Search",
+      "success": false,
+      "attempts": 15061,
+      "time_taken": 0.544334888458252,
+      "password_length": 11,
+      "password_complexity": 82.0
+    },
+    {
+      "timestamp": 1763921945.6840358,
+      "method": "Hybrid",
+      "success": false,
+      "attempts": 223923,
+      "time_taken": 3.31174373626709,
+      "password_length": 11,
+      "password_complexity": 82.0
+    },
+    {
+      "timestamp": 1763921945.7509446,
+      "method": "Dictionary Attack",
+      "success": false,
+      "attempts": 8161,
+      "time_taken": 0.06683349609375,
+      "password_length": 13,
+      "password_complexity": 86.0
+    },
+    {
+      "timestamp": 1763921949.1703546,
+      "method": "Genetic Algorithm",
+      "success": false,
+      "attempts": 200701,
+      "time_taken": 3.4193577766418457,
+      "password_length": 13,
+      "password_complexity": 86.0
+    },
+    {
+      "timestamp": 1763921950.3792102,
+      "method": "Quantum Search",
+      "success": false,
+      "attempts": 15061,
+      "time_taken": 1.2088065147399902,
+      "password_length": 13,
+      "password_complexity": 86.0
+    },
+    {
+      "timestamp": 1763921954.352326,
+      "method": "Hybrid",
+      "success": false,
+      "attempts": 223923,
+      "time_taken": 3.973067283630371,
+      "password_length": 13,
+      "password_complexity": 86.0
+    }
+  ],
+  "password_complexity": [
+    {
+      "password": "a",
+      "length": 1,
+      "complexity": 17.0
+    },
+    {
+      "password": "a",
+      "length": 1,
+      "complexity": 17.0
+    },
+    {
+      "password": "a",
+      "length": 1,
+      "complexity": 17.0
+    },
+    {
+      "password": "a",
+      "length": 1,
+      "complexity": 17.0
+    },
+    {
+      "password": "ab",
+      "length": 2,
+      "complexity": 24.0
+    },
+    {
+      "password": "ab",
+      "length": 2,
+      "complexity": 24.0
+    },
+    {
+      "password": "ab",
+      "length": 2,
+      "complexity": 24.0
+    },
+    {
+      "password": "ab",
+      "length": 2,
+      "complexity": 24.0
+    },
+    {
+      "password": "abc",
+      "length": 3,
+      "complexity": 31.0
+    },
+    {
+      "password": "abc",
+      "length": 3,
+      "complexity": 31.0
+    },
+    {
+      "password": "abc",
+      "length": 3,
+      "complexity": 31.0
+    },
+    {
+      "password": "abc",
+      "length": 3,
+      "complexity": 31.0
+    },
+    {
+      "password": "test",
+      "length": 4,
+      "complexity": 33.0
+    },
+    {
+      "password": "test",
+      "length": 4,
+      "complexity": 33.0
+    },
+    {
+      "password": "test",
+      "length": 4,
+      "complexity": 33.0
+    },
+    {
+      "password": "test",
+      "length": 4,
+      "complexity": 33.0
+    },
+    {
+      "password": "pass",
+      "length": 4,
+      "complexity": 33.0
+    },
+    {
+      "password": "pass",
+      "length": 4,
+      "complexity": 33.0
+    },
+    {
+      "password": "pass",
+      "length": 4,
+      "complexity": 33.0
+    },
+    {
+      "password": "pass",
+      "length": 4,
+      "complexity": 33.0
+    },
+    {
+      "password": "1234",
+      "length": 4,
+      "complexity": 38.0
+    },
+    {
+      "password": "1234",
+      "length": 4,
+      "complexity": 38.0
+    },
+    {
+      "password": "1234",
+      "length": 4,
+      "complexity": 38.0
+    },
+    {
+      "password": "1234",
+      "length": 4,
+      "complexity": 38.0
+    },
+    {
+      "password": "pas",
+      "length": 3,
+      "complexity": 31.0
+    },
+    {
+      "password": "pas",
+      "length": 3,
+      "complexity": 31.0
+    },
+    {
+      "password": "pas",
+      "length": 3,
+      "complexity": 31.0
+    },
+    {
+      "password": "pas",
+      "length": 3,
+      "complexity": 31.0
+    },
+    {
+      "password": "password",
+      "length": 8,
+      "complexity": 61.0
+    },
+    {
+      "password": "password",
+      "length": 8,
+      "complexity": 61.0
+    },
+    {
+      "password": "password",
+      "length": 8,
+      "complexity": 61.0
+    },
+    {
+      "password": "password",
+      "length": 8,
+      "complexity": 61.0
+    },
+    {
+      "password": "admin",
+      "length": 5,
+      "complexity": 45.0
+    },
+    {
+      "password": "admin",
+      "length": 5,
+      "complexity": 45.0
+    },
+    {
+      "password": "admin",
+      "length": 5,
+      "complexity": 45.0
+    },
+    {
+      "password": "admin",
+      "length": 5,
+      "complexity": 45.0
+    },
+    {
+      "password": "hello",
+      "length": 5,
+      "complexity": 40.0
+    },
+    {
+      "password": "hello",
+      "length": 5,
+      "complexity": 40.0
+    },
+    {
+      "password": "hello",
+      "length": 5,
+      "complexity": 40.0
+    },
+    {
+      "password": "hello",
+      "length": 5,
+      "complexity": 40.0
+    },
+    {
+      "password": "secret",
+      "length": 6,
+      "complexity": 47.0
+    },
+    {
+      "password": "secret",
+      "length": 6,
+      "complexity": 47.0
+    },
+    {
+      "password": "secret",
+      "length": 6,
+      "complexity": 47.0
+    },
+    {
+      "password": "secret",
+      "length": 6,
+      "complexity": 47.0
+    },
+    {
+      "password": "123456",
+      "length": 6,
+      "complexity": 52.0
+    },
+    {
+      "password": "123456",
+      "length": 6,
+      "complexity": 52.0
+    },
+    {
+      "password": "123456",
+      "length": 6,
+      "complexity": 52.0
+    },
+    {
+      "password": "123456",
+      "length": 6,
+      "complexity": 52.0
+    },
+    {
+      "password": "13579",
+      "length": 5,
+      "complexity": 45.0
+    },
+    {
+      "password": "13579",
+      "length": 5,
+      "complexity": 45.0
+    },
+    {
+      "password": "13579",
+      "length": 5,
+      "complexity": 45.0
+    },
+    {
+      "password": "13579",
+      "length": 5,
+      "complexity": 45.0
+    },
+    {
+      "password": "Password123",
+      "length": 11,
+      "complexity": 102.0
+    },
+    {
+      "password": "Password123",
+      "length": 11,
+      "complexity": 102.0
+    },
+    {
+      "password": "Password123",
+      "length": 11,
+      "complexity": 102.0
+    },
+    {
+      "password": "Password123",
+      "length": 11,
+      "complexity": 102.0
+    },
+    {
+      "password": "Admin2024",
+      "length": 9,
+      "complexity": 88.0
+    },
+    {
+      "password": "Admin2024",
+      "length": 9,
+      "complexity": 88.0
+    },
+    {
+      "password": "Admin2024",
+      "length": 9,
+      "complexity": 88.0
+    },
+    {
+      "password": "Admin2024",
+      "length": 9,
+      "complexity": 88.0
+    },
+    {
+      "password": "HelloWorld",
+      "length": 10,
+      "complexity": 75.0
+    },
+    {
+      "password": "HelloWorld",
+      "length": 10,
+      "complexity": 75.0
+    },
+    {
+      "password": "HelloWorld",
+      "length": 10,
+      "complexity": 75.0
+    },
+    {
+      "password": "HelloWorld",
+      "length": 10,
+      "complexity": 75.0
+    },
+    {
+      "password": "Test123!",
+      "length": 8,
+      "complexity": 96.0
+    },
+    {
+      "password": "Test123!",
+      "length": 8,
+      "complexity": 96.0
+    },
+    {
+      "password": "Test123!",
+      "length": 8,
+      "complexity": 96.0
+    },
+    {
+      "password": "Test123!",
+      "length": 8,
+      "complexity": 96.0
+    },
+    {
+      "password": "PW0RDsecurepass12",
+      "length": 17,
+      "complexity": 134.0
+    },
+    {
+      "password": "PW0RDsecurepass12",
+      "length": 17,
+      "complexity": 134.0
+    },
+    {
+      "password": "PW0RDsecurepass12",
+      "length": 17,
+      "complexity": 134.0
+    },
+    {
+      "password": "PW0RDsecurepass12",
+      "length": 17,
+      "complexity": 134.0
+    },
+    {
+      "password": "crac",
+      "length": 4,
+      "complexity": 33.0
+    },
+    {
+      "password": "crac",
+      "length": 4,
+      "complexity": 33.0
+    },
+    {
+      "password": "crac",
+      "length": 4,
+      "complexity": 33.0
+    },
+    {
+      "password": "crac",
+      "length": 4,
+      "complexity": 33.0
+    },
+    {
+      "password": "paaaass",
+      "length": 7,
+      "complexity": 39.0
+    },
+    {
+      "password": "paaaass",
+      "length": 7,
+      "complexity": 39.0
+    },
+    {
+      "password": "paaaass",
+      "length": 7,
+      "complexity": 39.0
+    },
+    {
+      "password": "paaaass",
+      "length": 7,
+      "complexity": 39.0
+    },
+    {
+      "password": "MySecurePass123!",
+      "length": 16,
+      "complexity": 142.0
+    },
+    {
+      "password": "MySecurePass123!",
+      "length": 16,
+      "complexity": 142.0
+    },
+    {
+      "password": "MySecurePass123!",
+      "length": 16,
+      "complexity": 142.0
+    },
+    {
+      "password": "MySecurePass123!",
+      "length": 16,
+      "complexity": 142.0
+    },
+    {
+      "password": "Quantum2024",
+      "length": 11,
+      "complexity": 97.0
+    },
+    {
+      "password": "Quantum2024",
+      "length": 11,
+      "complexity": 97.0
+    },
+    {
+      "password": "Quantum2024",
+      "length": 11,
+      "complexity": 97.0
+    },
+    {
+      "password": "Quantum2024",
+      "length": 11,
+      "complexity": 97.0
+    },
+    {
+      "password": "Test@123",
+      "length": 8,
+      "complexity": 96.0
+    },
+    {
+      "password": "Test@123",
+      "length": 8,
+      "complexity": 96.0
+    },
+    {
+      "password": "Test@123",
+      "length": 8,
+      "complexity": 96.0
+    },
+    {
+      "password": "Test@123",
+      "length": 8,
+      "complexity": 96.0
+    },
+    {
+      "password": "hello_world",
+      "length": 11,
+      "complexity": 82.0
+    },
+    {
+      "password": "hello_world",
+      "length": 11,
+      "complexity": 82.0
+    },
+    {
+      "password": "hello_world",
+      "length": 11,
+      "complexity": 82.0
+    },
+    {
+      "password": "hello_world",
+      "length": 11,
+      "complexity": 82.0
+    },
+    {
+      "password": "difficultpass",
+      "length": 13,
+      "complexity": 86.0
+    },
+    {
+      "password": "difficultpass",
+      "length": 13,
+      "complexity": 86.0
+    },
+    {
+      "password": "difficultpass",
+      "length": 13,
+      "complexity": 86.0
+    },
+    {
+      "password": "difficultpass",
+      "length": 13,
+      "complexity": 86.0
+    }
+  ],
+  "summary": {
+    "total_attacks": 100,
+    "successful_attacks": 60,
+    "overall_success_rate": 60.0
+  }
+}
