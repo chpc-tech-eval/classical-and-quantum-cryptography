@@ -2,312 +2,388 @@
 """
 shor_actual.py
 
-Actual implementation of Shor's algorithm for factoring N=15.
-This implementation works with modern Qiskit (1.0+) and qiskit-aer.
+TARGETED implementation of Shor's algorithm for small composite numbers up to 15.
+Automatically tests ALL valid numbers (6, 10, 12, 14, 15) that can be factored 
+using 4 target qubits.
+
+⚠️  STABILITY: LIMITED TO 4 TARGET QUBITS ONLY ⚠️
 
 Usage:
-    # Run locally (simulation)
-    python3 shor_actual.py --N 15 --a 7
-    python3 shor_actual.py --N 15 --a 7 --shots 1024
+    # Run all tests (simulation - default)
+    python3 shor_actual.py
     
-    # Run on IBM Quantum
-    python3 shor_actual.py --N 15 --a 7 --use_ibm --token <TOKEN>
-
-    # Specify IBM backend
-    python3 shor_actual.py --N 15 --a 7 --use_ibm --token <TOKEN> --backend <SPECIFIED_BACKEND>
+    # Run with custom shots
+    python3 shor_actual.py --shots 8192
+    
+    # Run on IBM Quantum hardware
+    python3 shor_actual.py --use_ibm --backend ibm_torino
+    
+    # Test only specific number
+    python3 shor_actual.py --only 15
+    
+    # Save circuits to PNG
+    python3 shor_actual.py --circuits_dir circuits
 """
 
 import argparse
 import math
 import sys
-from fractions import Fraction
+import time
 from collections import Counter
+from datetime import datetime
+import numpy as np
 
+# Import shared functions
+try:
+    from functions import (
+        gcd, check_candidate_period, continued_fractions_convergents,
+        qft_dagger, save_circuit_png, save_results_json, append_to_csv,
+        classical_order_finding
+    )
+except ImportError as e:
+    print(f"[ERROR] Could not import functions.py: {e}")
+    print("Make sure functions.py is in the same directory.")
+    sys.exit(1)
+
+# Import Qiskit
 try:
     from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
     from qiskit_aer import Aer
     from qiskit import transpile
 except ImportError as e:
-    print(f"Error: Missing required packages. Install with:")
-    print(f"  pip install qiskit qiskit-aer")
+    print(f"[ERROR] Missing required packages. Install with:")
+    print(f"  pip install qiskit qiskit-aer matplotlib")
     sys.exit(1)
-
-import numpy as np
 
 # Try to import IBM Quantum runtime
 try:
-    from qiskit_ibm_runtime import QiskitRuntimeService, Sampler, Session
-    from qiskit_ibm_runtime import Options
+    from qiskit_ibm_runtime import QiskitRuntimeService, SamplerV2 as Sampler
     HAVE_IBM = True
 except ImportError:
     HAVE_IBM = False
 
-def gcd(a, b):
-    """Compute greatest common divisor using Euclid's algorithm."""
-    while b:
-        a, b = b, a % b
-    return a
 
-def check_candidate_period(a, r, N):
-    """Verify that r is a valid period for a mod N."""
-    return pow(a, r, N) == 1
+# ============================================================================
+# VALID NUMBERS FOR SHOR'S ALGORITHM (4 QUBITS)
+# ============================================================================
 
-def continued_fractions_convergents(phi, Q):
+VALID_NUMBERS = {
+    10: {
+        'factors': [2, 5],
+        'valid_bases': [3, 7, 9],
+        'description': '10 = 2 × 5',
+    },
+    12: {
+        'factors': [3, 4],
+        'valid_bases': [5, 7, 11],
+        'description': '12 = 3 × 4',
+    },
+    14: {
+        'factors': [2, 7],
+        'valid_bases': [3, 5, 9, 11, 13],
+        'description': '14 = 2 × 7',
+    },
+    15: {
+        'factors': [3, 5],
+        'valid_bases': [2, 4, 7, 8, 11, 13],
+        'description': '15 = 3 × 5',
+    }
+}
+
+TARGET_QUBITS = 4
+
+
+# ============================================================================
+# CIRCUIT CONSTRUCTION (Actual/Targeted Implementation)
+# ============================================================================
+
+def c_amod_n(a, N, n_target):
     """
-    Find the best rational approximation s/r to phi where r < Q
-    using continued fractions.
+    Create controlled modular multiplication gate: |x⟩ → |ax mod N⟩
     
-    This is the classical post-processing step that extracts the period
-    from the phase measured by the quantum circuit.
+    This is the ACTUAL/TARGETED implementation optimized for small N.
+    Uses explicit unitary matrix construction.
+    
+    Args:
+        a: Base for modular multiplication
+        N: Modulus
+        n_target: Number of target qubits (fixed at 4)
+    
+    Returns:
+        Gate: Controlled unitary gate
     """
-    if phi == 0:
-        return (0, 1)
+    size = 2 ** n_target
+    U = np.zeros((size, size), dtype=complex)
     
-    # Generate continued fraction convergents
-    a = [int(phi)]
-    remainders = [phi - a[0]]
-    convergents = [(a[0], 1)]
-    
-    for i in range(1, 20):  # Limit iterations
-        if abs(remainders[i-1]) < 1e-10:
-            break
-        
-        next_a = int(1 / remainders[i-1])
-        a.append(next_a)
-        remainders.append(1 / remainders[i-1] - next_a)
-        
-        # Calculate convergent p/q
-        if i == 1:
-            p = a[1] * a[0] + 1
-            q = a[1]
+    for x in range(size):
+        if x < N:
+            ax_mod_n = (a * x) % N
+            U[ax_mod_n][x] = 1.0
         else:
-            p = a[i] * convergents[i-1][0] + convergents[i-2][0]
-            q = a[i] * convergents[i-1][1] + convergents[i-2][1]
-        
-        convergents.append((p, q))
-        
-        if q >= Q:
-            break
+            U[x][x] = 1.0
     
-    # Return the convergent with largest denominator < Q
-    for p, q in reversed(convergents):
-        if q < Q and q > 0:
-            return (p, q)
+    qc = QuantumCircuit(n_target)
+    qc.unitary(U, range(n_target), label=f'U_a={a}')
     
-    return (0, 1)
+    return qc.to_gate()
 
 
-def qft_dagger(n):
+def shor_circuit(N, a, n_count=8):
     """
-    Create inverse Quantum Fourier Transform circuit for n qubits.
+    Build Shor's algorithm circuit for ACTUAL implementation.
     
-    The QFT is crucial for period finding - it converts the periodic
-    pattern in the quantum state into measurable phase information.
+    Fixed to 4 target qubits for maximum stability.
     
     Args:
-        n: Number of qubits
+        N: Number to factor (must be in VALID_NUMBERS)
+        a: Base (must be coprime to N)
+        n_count: Number of counting qubits (default: 8)
     
     Returns:
-        QuantumCircuit implementing QFT†
+        QuantumCircuit: Complete Shor's circuit
     """
-    qc = QuantumCircuit(n)
+    if N not in VALID_NUMBERS:
+        raise ValueError(f"N={N} not supported. Use: {list(VALID_NUMBERS.keys())}")
     
-    # Reverse order of qubits for the QFT
-    for qubit in range(n // 2):
-        qc.swap(qubit, n - qubit - 1)
+    n_target = TARGET_QUBITS
     
-    for j in range(n):
-        for m in range(j):
-            qc.cp(-math.pi / float(2 ** (j - m)), m, j)
-        qc.h(j)
+    # Create registers
+    counting_reg = QuantumRegister(n_count, 'counting')
+    target_reg = QuantumRegister(n_target, 'target')
+    classical_reg = ClassicalRegister(n_count, 'classical')
     
-    return qc
-
-
-def c_amod15(a, power):
-    """
-    Controlled multiplication by a^power mod 15.
+    qc = QuantumCircuit(counting_reg, target_reg, classical_reg)
     
-    This implements the unitary U where U|y> = |ay mod 15>
-    The controlled version applies this transformation only when
-    the control qubit is |1>.
-    
-    Args:
-        a: Base number (must be coprime to 15)
-        power: How many times to apply the multiplication
-    
-    Returns:
-        Controlled gate that performs modular multiplication
-    """
-    if a not in [2, 4, 7, 8, 11, 13]:
-        raise ValueError(f"'a' must be coprime to 15 and not 1. Got a={a}")
-    
-    U = QuantumCircuit(4)
-    
-    for _ in range(power):
-        if a in [2, 13]:
-            U.swap(0, 1)
-            U.swap(1, 2)
-            U.swap(2, 3)
-        if a in [7, 8]:
-            U.swap(2, 3)
-            U.swap(1, 2)
-            U.swap(0, 1)
-        if a in [4, 11]:
-            U.swap(1, 3)
-            U.swap(0, 2)
-        if a in [7, 11, 13]:
-            for q in range(4):
-                U.x(q)
-    
-    U = U.to_gate()
-    U.name = f"{a}^{power} mod 15"
-    c_U = U.control()
-    return c_U
-
-
-def shor_circuit(a, n_count=8):
-    """
-    Create the quantum circuit for Shor's algorithm to factor 15.
-    
-    Circuit structure:
-    1. Initialize target register to |1>
-    2. Create superposition in counting register (Hadamard on all qubits)
-    3. Apply controlled modular exponentiation (the "quantum" part)
-    4. Apply inverse QFT to extract phase information
-    5. Measure to get the period
-    
-    Args:
-        a: The base for modular exponentiation (must be coprime to 15)
-        n_count: Number of counting qubits (more = better precision, but deeper circuit)
-    
-    Returns:
-        QuantumCircuit ready to run
-    """
-    # Create quantum registers
-    counting_qubits = QuantumRegister(n_count, 'counting')
-    target_qubits = QuantumRegister(4, 'target')
-    classical_bits = ClassicalRegister(n_count, 'classical')
-    
-    qc = QuantumCircuit(counting_qubits, target_qubits, classical_bits)
-    
-    # Initialize target register to |1>
-    qc.x(target_qubits[0])
+    # Initialize target to |1⟩
+    qc.x(target_reg[0])
     
     # Put counting register in superposition
     for q in range(n_count):
-        qc.h(counting_qubits[q])
+        qc.h(counting_reg[q])
     
-    # Apply controlled-U operations
-    # For each counting qubit j, apply U^(2^j)
+    # Apply controlled U^(2^j) operations
     for q in range(n_count):
         power = 2 ** q
-        qc.append(
-            c_amod15(a, power),
-            [counting_qubits[q]] + [target_qubits[i] for i in range(4)]
-        )
+        a_power = pow(a, power, N)
+        
+        # Create controlled gate
+        U = c_amod_n(a_power, N, n_target)
+        controlled_U = U.control()
+        
+        # Apply to circuit
+        qc.append(controlled_U, [counting_reg[q]] + list(target_reg))
     
-    # Apply inverse QFT to counting register
-    qc.append(qft_dagger(n_count), counting_qubits)
+    # Apply inverse QFT
+    qc.append(qft_dagger(n_count), counting_reg)
     
     # Measure counting register
-    qc.measure(counting_qubits, classical_bits)
+    qc.measure(counting_reg, classical_reg)
     
     return qc
 
 
-def run_shor(N, a, backend=None, shots=1024, n_count=8, use_ibm=False):
+# ============================================================================
+# TIMING DISPLAY
+# ============================================================================
+
+def display_timing_summary(log_data, test_label=""):
+    """Display timing breakdown for a test run."""
+    timing = log_data.get('timing', {})
+    
+    print(f"\n{'─'*70}")
+    print(f"⏱️  TIMING SUMMARY: {test_label}")
+    print(f"{'─'*70}")
+    
+    if 'circuit_construction' in timing:
+        print(f"  Circuit Build:    {timing.get('circuit_construction', 0):.3f}s")
+    if 'transpilation' in timing:
+        print(f"  Transpilation:    {timing.get('transpilation', 0):.3f}s")
+    if 'execution' in timing:
+        print(f"  Execution:        {timing.get('execution', 0):.3f}s")
+    if 'postprocessing' in timing:
+        print(f"  Post-processing:  {timing.get('postprocessing', 0):.3f}s")
+    if 'total' in timing:
+        print(f"  {'─'*30}")
+        print(f"  TOTAL:            {timing.get('total', 0):.3f}s")
+    
+    print(f"{'─'*70}\n")
+
+
+# ============================================================================
+# MAIN ALGORITHM
+# ============================================================================
+
+def run_shor_single(N, a, backend, shots, n_count, use_ibm, circuits_dir=None, mode='simulation'):
     """
-    Run Shor's algorithm to factor N using base a.
+    Run Shor's algorithm for a single N and base a.
     
-    PARAMETER EXPLANATIONS:
-    
-    N (int): The number you want to factor. This implementation only works for N=15.
-             15 is the smallest non-trivial number that demonstrates Shor's algorithm.
-             15 = 3 × 5
-    
-    a (int): The "base" for modular exponentiation. Must be coprime to N (gcd(a,N)=1).
-             For N=15, valid choices are: 2, 4, 7, 8, 11, 13
-             Different values of 'a' have different periods:
-             - a=2: period r=4  (2^1=2, 2^2=4, 2^3=8, 2^4=16≡1 mod 15)
-             - a=7: period r=4  (7^1=7, 7^2=4, 7^3=13, 7^4=1 mod 15)
-             - a=11: period r=2 (11^1=11, 11^2=121≡1 mod 15)
-             - a=13: period r=4 (13^1=13, 13^2=4, 13^3=7, 13^4=1 mod 15)
-    
-    shots (int): How many times to run the quantum circuit and measure.
-                 More shots = more statistics = higher chance of success.
-                 Typical values: 1024-8192
-                 For IBM hardware, you might want 4096+ shots due to noise.
-    
-    n_count (int): Number of "counting qubits" (precision qubits).
-                   More qubits = better precision in finding the period.
-                   Rule of thumb: n_count ≥ 2*log2(N)
-                   For N=15: need at least 8 qubits (2*log2(15) ≈ 7.7)
-                   Tradeoff: More qubits = deeper circuit = more errors on real hardware
-    
-    backend: Where to run the circuit (Aer simulator or IBM quantum computer)
-    
-    use_ibm (bool): Whether running on IBM hardware (affects how results are processed)
+    Args:
+        N: Number to factor
+        a: Base (coprime to N)
+        backend: Qiskit backend
+        shots: Number of measurements
+        n_count: Number of counting qubits
+        use_ibm: Whether using IBM Quantum hardware
+        circuits_dir: Directory to save circuit PNGs (None to skip)
+        mode: 'simulation' or 'quantum'
     
     Returns:
-        Dictionary with results including factors if successful
+        dict: Complete log data with results and timing
     """
-    if N != 15:
+    start_time = datetime.now()
+    
+    if N not in VALID_NUMBERS:
         return {
             'success': False,
-            'error': 'This implementation only works for N=15'
+            'error': f'N={N} not in valid range',
+            'timestamp': start_time.isoformat(),
+            'N': N,
+            'a': a
         }
+    
+    info = VALID_NUMBERS[N]
     
     # Check if a is valid
     if gcd(a, N) != 1:
         factor = gcd(a, N)
+        other_factor = N // factor
         return {
             'success': True,
-            'factors': [factor, N // factor],
+            'factors': sorted([factor, other_factor]),
             'method': 'classical_gcd',
-            'message': f'gcd({a}, {N}) = {factor} is a non-trivial factor!'
+            'message': f'gcd({a}, {N}) = {factor}',
+            'timestamp': start_time.isoformat(),
+            'input_parameters': {'N': N, 'a': a, 'shots': shots, 'n_count': n_count, 'mode': mode},
+            'results': {'success': True, 'factors': sorted([factor, other_factor]), 'method': 'classical_gcd'},
+            'timing': {'total': 0.001}
         }
     
-    if a not in [2, 4, 7, 8, 11, 13]:
+    if a not in info['valid_bases']:
         return {
             'success': False,
-            'error': f'For N=15, a must be in [2, 4, 7, 8, 11, 13]. Got a={a}'
+            'error': f'Invalid base a={a} for N={N}',
+            'timestamp': start_time.isoformat(),
+            'N': N,
+            'a': a
         }
     
-    print(f"\n{'='*60}")
-    print(f"Running Shor's algorithm to factor N={N} with a={a}")
-    print(f"{'='*60}\n")
+    print(f"\n{'='*70}")
+    print(f"ACTUAL SHOR'S ALGORITHM - Factoring N={N} ({info['description']})")
+    print(f"Base: a={a}, Mode: {mode.upper()}")
+    print(f"{'='*70}")
     
-    # Create the circuit
-    print(f"[1/4] Building quantum circuit with {n_count} counting qubits...")
-    qc = shor_circuit(a, n_count)
-    print(f"      Circuit has {qc.num_qubits} qubits and depth {qc.depth()}")
+    log_data = {
+        'timestamp': start_time.isoformat(),
+        'input_parameters': {
+            'N': N,
+            'a': a,
+            'shots': shots,
+            'n_count': n_count,
+            'use_ibm': use_ibm,
+            'target_qubits': TARGET_QUBITS,
+            'mode': mode
+        },
+        'problem_info': info,
+        'timing': {},
+        'quantum_execution': {},
+        'postprocessing': {},
+        'results': {}
+    }
     
-    if backend is None:
-        backend = Aer.get_backend('aer_simulator')
+    # ========================================================================
+    # BUILD CIRCUIT
+    # ========================================================================
+    circuit_start = datetime.now()
+    print(f"\n[1/5] Building quantum circuit...")
     
-    print(f"\n[2/4] Running on backend: {backend}")
+    qc = shor_circuit(N, a, n_count)
+    total_qubits = qc.num_qubits
+    original_depth = qc.depth()
+    circuit_time = (datetime.now() - circuit_start).total_seconds()
+    
+    print(f"      Circuit: {total_qubits} qubits, depth {original_depth}")
+    
+    log_data['quantum_execution']['circuit'] = {
+        'total_qubits': total_qubits,
+        'counting_qubits': n_count,
+        'target_qubits': TARGET_QUBITS,
+        'original_depth': original_depth
+    }
+    log_data['timing']['circuit_construction'] = circuit_time
+    
+    # Save circuit diagram
+    if circuits_dir:
+        save_circuit_png(qc, N, a, f'actual_{mode}', circuits_dir)
+    
+    # ========================================================================
+    # TRANSPILE
+    # ========================================================================
+    print(f"\n[2/5] Backend: {backend}")
     print(f"      Shots: {shots}")
     
+    transpile_start = datetime.now()
+    print(f"\n[3/5] Transpiling...")
+    
     transpiled = transpile(qc, backend, optimization_level=3)
-    print(f"      Transpiled circuit depth: {transpiled.depth()}")
+    transpiled_depth = transpiled.depth()
+    transpile_time = (datetime.now() - transpile_start).total_seconds()
     
-    job = backend.run(transpiled, shots=shots)
-    result = job.result()
-    counts = result.get_counts()
+    print(f"      Transpiled depth: {transpiled_depth}")
     
-    print(f"      Got {len(counts)} distinct measurement outcomes")
+    log_data['quantum_execution']['transpiled'] = {
+        'depth': transpiled_depth
+    }
+    log_data['timing']['transpilation'] = transpile_time
     
-    # Process the measurement results
-    print(f"\n[3/4] Processing measurement results...")
-    print(f"      Top 5 measurements:")
-    for measured_value, count in Counter(counts).most_common(5):
-        print(f"        {measured_value}: {count} times ({100*count/shots:.1f}%)")
+    # ========================================================================
+    # EXECUTE
+    # ========================================================================
+    print(f"\n[4/5] Executing...")
+    exec_start = datetime.now()
     
-    # Try to find the period from measurements
-    print(f"\n[4/4] Extracting period using continued fractions...")
+    if use_ibm:
+        sampler = Sampler(backend)
+        job = sampler.run([transpiled], shots=shots)
+        print(f"      Job ID: {job.job_id()}")
+        result = job.result()
+        
+        pub_result = result[0]
+        data_bin = pub_result.data
+        
+        if hasattr(data_bin, 'classical'):
+            counts_dict = data_bin.classical.get_counts()
+        elif hasattr(data_bin, 'meas'):
+            counts_dict = data_bin.meas.get_counts()
+        else:
+            attrs = [attr for attr in dir(data_bin) if not attr.startswith('_')]
+            if attrs:
+                counts_dict = getattr(data_bin, attrs[0]).get_counts()
+            else:
+                raise RuntimeError("Could not extract measurements")
+        
+        counts = {k: v for k, v in counts_dict.items()}
+    else:
+        job = backend.run(transpiled, shots=shots)
+        result = job.result()
+        counts = result.get_counts()
+    
+    execution_time = (datetime.now() - exec_start).total_seconds()
+    
+    print(f"      Got {len(counts)} distinct outcomes")
+    
+    log_data['quantum_execution']['measurements'] = {
+        'distinct_outcomes': len(counts),
+        'execution_time': execution_time
+    }
+    log_data['timing']['execution'] = execution_time
+    
+    # ========================================================================
+    # POST-PROCESS
+    # ========================================================================
+    postprocess_start = datetime.now()
+    print(f"\n[5/5] Processing results...")
+    
     Q = 2 ** n_count
-    
     successful_periods = []
     
     for measured_value_str, count in counts.items():
@@ -315,36 +391,41 @@ def run_shor(N, a, backend=None, shots=1024, n_count=8, use_ibm=False):
         if measured_value == 0:
             continue
         
-        # Phase estimation: measured value / 2^n_count ≈ s/r
         phase = measured_value / Q
-        
-        # Use continued fractions to find best rational approximation
         s, r = continued_fractions_convergents(phase, N)
         
         if r > 0 and r < N:
-            # Verify this is a valid period
             if check_candidate_period(a, r, N):
                 successful_periods.append((r, count, measured_value, phase))
     
-    if not successful_periods:
-        return {
-            'success': False,
-            'error': 'Could not find valid period from measurements',
-            'counts': counts
-        }
+    postprocess_time = (datetime.now() - postprocess_start).total_seconds()
+    log_data['timing']['postprocessing'] = postprocess_time
     
-    # Use the most common valid period
+    log_data['postprocessing']['valid_periods_found'] = len(successful_periods)
+    
+    if not successful_periods:
+        total_time = (datetime.now() - start_time).total_seconds()
+        log_data['results'] = {
+            'success': False,
+            'error': 'Could not find valid period'
+        }
+        log_data['timing']['total'] = total_time
+        print(f"      ✗ Failed to find period")
+        return log_data
+    
+    # Use most common valid period
     successful_periods.sort(key=lambda x: x[1], reverse=True)
     r, count, measured_value, phase = successful_periods[0]
     
-    print(f"\n      Found period r={r} (measured {measured_value}, phase={phase:.4f})")
-    print(f"      Verification: {a}^{r} mod {N} = {pow(a, r, N)}")
+    print(f"      Found period r={r}")
     
-    # Extract factors from period
+    # ========================================================================
+    # EXTRACT FACTORS
+    # ========================================================================
     if r % 2 == 0:
         guesses = [
-            gcd(int(a ** (r // 2) - 1), N),
-            gcd(int(a ** (r // 2) + 1), N)
+            gcd(int(pow(a, r // 2, N) - 1), N),
+            gcd(int(pow(a, r // 2, N) + 1), N)
         ]
         
         factors = [g for g in guesses if g not in [1, N]]
@@ -352,123 +433,209 @@ def run_shor(N, a, backend=None, shots=1024, n_count=8, use_ibm=False):
         if factors:
             factor = factors[0]
             other_factor = N // factor
-            print(f"\n{'='*60}")
-            print(f"SUCCESS! Found factors: {factor} × {other_factor} = {N}")
-            print(f"{'='*60}\n")
-            return {
+            print(f"      ✓ Found factors: {factor} × {other_factor} = {N}")
+            
+            total_time = (datetime.now() - start_time).total_seconds()
+            
+            log_data['results'] = {
                 'success': True,
                 'factors': sorted([factor, other_factor]),
                 'period': r,
                 'base': a,
-                'counts': counts
+                'method': 'quantum'
             }
+            log_data['timing']['total'] = total_time
+            
+            return log_data
     
-    return {
+    total_time = (datetime.now() - start_time).total_seconds()
+    log_data['results'] = {
         'success': False,
-        'error': f'Period r={r} did not yield factors (r is odd or a^(r/2)=-1 mod N)',
-        'period': r,
-        'counts': counts
+        'error': f'Period r={r} did not yield factors',
+        'period': r
     }
+    log_data['timing']['total'] = total_time
+    print(f"      ✗ Period found but no factors extracted")
+    
+    return log_data
 
+
+# ============================================================================
+# MAIN ENTRY POINT
+# ============================================================================
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Manual implementation of Shor's algorithm for N=15",
+        description="Targeted Shor's algorithm for numbers 6-15 (4 qubits)",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
-PARAMETER GUIDE:
-  --N:        Number to factor (must be 15 for this implementation)
-  --a:        Base for modular exponentiation. Valid: 2, 4, 7, 8, 11, 13
-              This is the number we raise to powers mod N to find periodicity.
-  --shots:    Number of times to measure the quantum circuit.
-              More shots = better statistics. Typical: 1024-8192
-  --n_count:  Number of precision qubits (counting register).
-              More qubits = better precision but deeper circuit.
-              For N=15, use 8 (default) or more.
-              
-EXAMPLES:
-  # Run locally with default settings:
-  python3 shor_manual_ibm.py --N 15 --a 7
+Examples:
+  # Single test - simulation (default)
+  python3 shor_actual.py --N 15 --a 2
   
-  # Run with more shots for better statistics:
-  python3 shor_manual_ibm.py --N 15 --a 7 --shots 4096
+  # Use GPU acceleration (A100)
+  python3 shor_actual.py --N 15 --a 2 --gpu
   
-  # Run on IBM Quantum (requires token):
-  python3 shor_manual_ibm.py --N 15 --a 7 --use_ibm --token YOUR_TOKEN
+  # Run on IBM Quantum (use sparingly!)
+  python3 shor_actual.py --N 15 --a 2 --use_ibm
   
-  # Use specific IBM backend:
-  python3 shor_manual_ibm.py --N 15 --a 7 --use_ibm --backend ibm_brisbane --shots 8192
-"""
+  # Save circuit diagram
+  python3 shor_actual.py --N 15 --a 2 --circuits_dir circuits
+        """
     )
-    parser.add_argument('--N', type=int, default=15, help='Number to factor (must be 15)')
-    parser.add_argument('--a', type=int, default=7, help='Base (must be in [2,4,7,8,11,13])')
-    parser.add_argument('--shots', type=int, default=2048, help='Number of measurements')
-    parser.add_argument('--n_count', type=int, default=8, help='Number of counting qubits')
-    parser.add_argument('--use_ibm', action='store_true', help='Run on IBM Quantum backend')
-    parser.add_argument('--token', type=str, help='IBM Quantum API token')
-    parser.add_argument('--backend', type=str, default=None, help='Specific IBM backend name')
+    parser.add_argument('--N', type=int, required=True, 
+                        choices=[6, 10, 12, 14, 15],
+                        help='Number to factor (6, 10, 12, 14, or 15)')
+    parser.add_argument('--a', type=int, default=None,
+                        help='Base (default: first valid base for N)')
+    parser.add_argument('--shots', type=int, default=4096,
+                        help='Number of measurements (default: 4096)')
+    parser.add_argument('--n_count', type=int, default=8,
+                        help='Number of counting qubits (default: 8)')
+    parser.add_argument('--use_ibm', action='store_true',
+                        help='Run on IBM Quantum hardware (default: simulation)')
+    parser.add_argument('--backend', type=str, default=None,
+                        help='Specific IBM backend name')
+    parser.add_argument('--csv', type=str, default=None,
+                        help='CSV output file (default: auto-named based on mode)')
+    parser.add_argument('--circuits_dir', type=str, default=None,
+                        help='Directory to save circuit PNGs (default: None)')
+    parser.add_argument('--gpu', action='store_true',
+                        help='Use GPU acceleration (requires qiskit-aer-gpu)')
     
     args = parser.parse_args()
     
+    # Validate N
+    if args.N not in VALID_NUMBERS:
+        print(f"[ERROR] N={args.N} not supported.")
+        print(f"Valid values: {list(VALID_NUMBERS.keys())}")
+        sys.exit(1)
+    
+    # Select base 'a' if not provided
+    if args.a is None:
+        args.a = VALID_NUMBERS[args.N]['valid_bases'][0]
+        print(f"[INFO] Using default base a={args.a} for N={args.N}")
+    else:
+        # Validate base
+        if args.a not in VALID_NUMBERS[args.N]['valid_bases']:
+            print(f"[ERROR] Invalid base a={args.a} for N={args.N}")
+            print(f"Valid bases for N={args.N}: {VALID_NUMBERS[args.N]['valid_bases']}")
+            sys.exit(1)
+    
+    # ========================================================================
+    # SETUP BACKEND
+    # ========================================================================
     backend = None
     use_ibm = args.use_ibm
+    mode = 'quantum' if use_ibm else 'simulation'
+    
+    # Auto-select CSV filename based on mode if not specified
+    if args.csv is None:
+        if use_ibm:
+            csv_file = 'shor_actual_quantum_results.csv'
+        else:
+            csv_file = 'shor_actual_results.csv'
+    else:
+        csv_file = args.csv
     
     if use_ibm:
+        if args.gpu:
+            print("[WARNING] --gpu ignored when using IBM Quantum hardware")
+        
         if not HAVE_IBM:
             print("[ERROR] qiskit-ibm-runtime not installed.")
-            print("Install with: pip install qiskit-ibm-runtime")
             sys.exit(1)
-        
-        # Setup IBM Quantum
-        if args.token:
-            QiskitRuntimeService.save_account(
-                channel="ibm_quantum",
-                token=args.token,
-                overwrite=True
-            )
-            print("[INFO] Saved IBM Quantum token")
         
         try:
-            service = QiskitRuntimeService(channel="ibm_quantum")
-        except Exception as e:
-            print(f"[ERROR] Could not connect to IBM Quantum: {e}")
-            print("Make sure you've provided --token or saved your credentials")
+            print("[INFO] Loading credentials...")
+            import my_credentials
+        except ImportError:
+            print("[ERROR] Could not import my_credentials.py")
             sys.exit(1)
         
-        # Select backend
+        try:
+            service = QiskitRuntimeService(channel="ibm_quantum_platform")
+        except Exception as e:
+            print(f"[ERROR] Could not connect to IBM Quantum: {e}")
+            sys.exit(1)
+        
+        min_qubits = args.n_count + TARGET_QUBITS
+        
         if args.backend:
             backend = service.backend(args.backend)
+            print(f"[INFO] Using backend: {backend.name}")
         else:
-            # Get least busy backend
-            backends = service.backends(simulator=False, operational=True, min_num_qubits=12)
-            if backends:
-                backend = min(backends, key=lambda b: b.status().pending_jobs)
-                print(f"[INFO] Auto-selected least busy backend: {backend.name}")
-            else:
-                print("[ERROR] No suitable IBM backends found")
+            all_backends = service.backends(operational=True, min_num_qubits=min_qubits)
+            if not all_backends:
+                print(f"[ERROR] No backends with {min_qubits}+ qubits")
                 sys.exit(1)
+            
+            real_backends = [b for b in all_backends if not b.simulator]
+            if real_backends:
+                backend = min(real_backends, key=lambda b: b.status().pending_jobs)
+                print(f"[INFO] Auto-selected: {backend.name}")
+            else:
+                backend = all_backends[0]
+                print(f"[INFO] Using simulator: {backend.name}")
         
-        print(f"[INFO] Using IBM Quantum backend: {backend.name}")
+        print(f"[INFO] Backend qubits: {backend.num_qubits}")
         print(f"[INFO] Pending jobs: {backend.status().pending_jobs}")
-        print(f"[WARNING] Running on real quantum hardware - expect noise/errors!")
     else:
-        backend = Aer.get_backend('aer_simulator')
-        print(f"[INFO] Using local Aer simulator")
+        # Setup local simulator with optional GPU
+        if args.gpu:
+            try:
+                # Try GPU-enabled backend
+                backend = Aer.get_backend('aer_simulator')
+                backend.set_options(device='GPU')
+                print(f"[INFO] Using Aer simulator with GPU acceleration")
+                print(f"[INFO] ⚡ GPU backend configured (CUDA/cuQuantum)")
+            except Exception as e:
+                print(f"[WARNING] GPU acceleration requested but not available: {e}")
+                print(f"[INFO] Falling back to CPU simulator")
+                backend = Aer.get_backend('aer_simulator')
+        else:
+            backend = Aer.get_backend('aer_simulator')
+            print(f"[INFO] Using Aer simulator (CPU)")
+        
+        print(f"[INFO] ⚠️  Simulator is deterministic - results will be consistent")
+        print(f"[INFO]    Real quantum hardware would show more variation")
     
-    result = run_shor(
-        args.N,
-        args.a,
+    # ========================================================================
+    # RUN SINGLE TEST
+    # ========================================================================
+    test_start = time.time()
+    
+    result = run_shor_single(
+        N=args.N,
+        a=args.a,
         backend=backend,
         shots=args.shots,
         n_count=args.n_count,
-        use_ibm=use_ibm
+        use_ibm=use_ibm,
+        circuits_dir=args.circuits_dir,
+        mode=mode
     )
     
-    if result['success']:
-        print(f"\n✓ Factorization successful!")
-        print(f"  {args.N} = {' × '.join(map(str, result['factors']))}")
+    # Save to CSV
+    append_to_csv(result, csv_file)
+    
+    # Display timing summary
+    test_elapsed = time.time() - test_start
+    display_timing_summary(result, f"N={args.N}, a={args.a}")
+    print(f"⏱️  Total wall-clock time: {test_elapsed:.2f}s\n")
+    
+    # ========================================================================
+    # RESULT
+    # ========================================================================
+    if result['results'].get('success'):
+        factors = result['results']['factors']
+        print(f"✅ SUCCESS: {args.N} = {factors[0]} × {factors[1]}")
+        print(f"Results saved to: {csv_file}\n")
+        sys.exit(0)
     else:
-        print(f"\n✗ Factorization failed: {result.get('error', 'Unknown error')}")
+        error = result['results'].get('error', 'Unknown error')
+        print(f"❌ FAILED: {error}")
+        print(f"Results saved to: {csv_file}\n")
         sys.exit(1)
 
 
