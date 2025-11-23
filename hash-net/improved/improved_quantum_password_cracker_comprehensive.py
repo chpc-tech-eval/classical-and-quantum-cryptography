@@ -724,13 +724,14 @@ class CrackStatistics:
             }
         
         return report
-    
+
     def plot_performance(self, save_path: str = None):
-        """Generate performance visualization plots"""
+        """Generate enhanced performance visualization plots with better styling"""
         if not self.attack_history:
             print("No data available for plotting")
             return
         
+        # Convert data to proper format
         df_data = []
         for record in self.attack_history:
             df_data.append({
@@ -742,42 +743,315 @@ class CrackStatistics:
         
         df = pd.DataFrame(df_data)
         
-        fig, axes = plt.subplots(2, 2, figsize=(15, 12))
-        fig.suptitle('Password Cracking Performance Analysis', fontsize=16)
+        # Set up the plotting style
+        plt.style.use('seaborn-v0_8')
+        fig, axes = plt.subplots(2, 2, figsize=(16, 12))
+        fig.suptitle('Password Cracking Performance Analysis\nEnhanced Visualization', 
+                    fontsize=18, fontweight='bold', pad=20)
         
-        # Plot 1: Success rates by method
+        # Color scheme
+        colors = ['#2E86AB', '#A23B72', '#F18F01', '#C73E1D']
+        success_color = '#2E8B57'  # Green for success
+        failure_color = '#DC143C'  # Red for failure
+        
+        # Plot 1: Success rates by method (Enhanced)
         success_rates = df.groupby('method')['success'].mean() * 100
-        axes[0, 0].bar(success_rates.index, success_rates.values)
-        axes[0, 0].set_title('Success Rate by Method')
-        axes[0, 0].set_ylabel('Success Rate (%)')
+        bars1 = axes[0, 0].bar(success_rates.index, success_rates.values, 
+                              color=colors[:len(success_rates)], 
+                              alpha=0.8, edgecolor='black', linewidth=1.2)
+        axes[0, 0].set_title('Success Rate by Method', fontsize=14, fontweight='bold')
+        axes[0, 0].set_ylabel('Success Rate (%)', fontsize=12, fontweight='bold')
         axes[0, 0].tick_params(axis='x', rotation=45)
+        axes[0, 0].grid(True, alpha=0.3, axis='y')
+        axes[0, 0].set_ylim(0, 100)
         
-        # Plot 2: Average time by method
+        # Add data labels on bars
+        for bar, rate in zip(bars1, success_rates.values):
+            height = bar.get_height()
+            axes[0, 0].text(bar.get_x() + bar.get_width()/2., height + 1,
+                           f'{rate:.1f}%', ha='center', va='bottom', 
+                           fontweight='bold', fontsize=10)
+        
+        # Plot 2: Average time by method (Enhanced with log scale)
         avg_time = df.groupby('method')['time_taken'].mean()
-        axes[0, 1].bar(avg_time.index, avg_time.values)
-        axes[0, 1].set_title('Average Time by Method')
-        axes[0, 1].set_ylabel('Time (seconds)')
+        bars2 = axes[0, 1].bar(avg_time.index, avg_time.values, 
+                              color=colors[:len(avg_time)], 
+                              alpha=0.8, edgecolor='black', linewidth=1.2)
+        axes[0, 1].set_title('Average Time by Method (Log Scale)', fontsize=14, fontweight='bold')
+        axes[0, 1].set_ylabel('Time (seconds) - Log Scale', fontsize=12, fontweight='bold')
         axes[0, 1].tick_params(axis='x', rotation=45)
+        axes[0, 1].set_yscale('log')  # Logarithmic scale for better visualization
+        axes[0, 1].grid(True, alpha=0.3, axis='y')
         
-        # Plot 3: Attempts distribution
+        # Add data labels on bars
+        for bar, time_val in zip(bars2, avg_time.values):
+            height = bar.get_height()
+            axes[0, 1].text(bar.get_x() + bar.get_width()/2., height * 1.1,
+                           f'{time_val:.2f}s', ha='center', va='bottom', 
+                           fontweight='bold', fontsize=9)
+        
+        # Plot 3: Attempts distribution (Enhanced with log scale)
         attempts_data = [df[df['method'] == method]['attempts'] for method in df['method'].unique()]
-        axes[1, 0].boxplot(attempts_data, labels=df['method'].unique())
-        axes[1, 0].set_title('Attempts Distribution by Method')
-        axes[1, 0].set_ylabel('Number of Attempts')
+        box_plot = axes[1, 0].boxplot(attempts_data, labels=df['method'].unique(),
+                                     patch_artist=True, showmeans=True,
+                                     meanprops={"marker":"o", "markerfacecolor":"white", 
+                                               "markeredgecolor":"black"})
+        axes[1, 0].set_title('Attempts Distribution by Method (Log Scale)', 
+                            fontsize=14, fontweight='bold')
+        axes[1, 0].set_ylabel('Number of Attempts - Log Scale', fontsize=12, fontweight='bold')
         axes[1, 0].tick_params(axis='x', rotation=45)
+        axes[1, 0].set_yscale('log')  # Logarithmic scale for attempts
+        axes[1, 0].grid(True, alpha=0.3, axis='y')
         
-        # Plot 4: Time vs Success
-        success_colors = ['red' if not s else 'green' for s in df['success']]
-        axes[1, 1].scatter(df['attempts'], df['time_taken'], c=success_colors, alpha=0.6)
-        axes[1, 1].set_xlabel('Attempts')
-        axes[1, 1].set_ylabel('Time (seconds)')
-        axes[1, 1].set_title('Time vs Attempts (Red=Failed, Green=Success)')
+        # Color the box plots
+        for patch, color in zip(box_plot['boxes'], colors):
+            patch.set_facecolor(color)
+            patch.set_alpha(0.7)
+        
+        # Add median values as text annotations
+        for i, (method, data) in enumerate(zip(df['method'].unique(), attempts_data)):
+            median_val = np.median(data)
+            axes[1, 0].text(i + 1, median_val * 1.2, f'Med: {median_val:.0f}', 
+                           ha='center', va='bottom', fontweight='bold', fontsize=9,
+                           bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.8))
+        
+        # Plot 4: Time vs Attempts with trend lines (Enhanced)
+        success_mask = df['success'] == True
+        failed_mask = df['success'] == False
+        
+        # Plot successful attempts in green
+        success_scatter = axes[1, 1].scatter(df[success_mask]['attempts'], 
+                                           df[success_mask]['time_taken'], 
+                                           c=success_color, alpha=0.7, s=60, 
+                                           label='Successful', edgecolors='black', linewidth=0.5)
+        
+        # Plot failed attempts in red
+        failure_scatter = axes[1, 1].scatter(df[failed_mask]['attempts'], 
+                                           df[failed_mask]['time_taken'], 
+                                           c=failure_color, alpha=0.7, s=60, 
+                                           label='Failed', edgecolors='black', linewidth=0.5)
+        
+        # Add trend lines for both successful and failed attempts
+        if len(df[success_mask]) > 1:
+            # Trend line for successful attempts
+            z_success = np.polyfit(df[success_mask]['attempts'], 
+                                 df[success_mask]['time_taken'], 1)
+            p_success = np.poly1d(z_success)
+            x_range_success = np.linspace(df[success_mask]['attempts'].min(), 
+                                        df[success_mask]['attempts'].max(), 100)
+            axes[1, 1].plot(x_range_success, p_success(x_range_success), 
+                          color=success_color, linestyle='--', linewidth=2, 
+                          label=f'Success trend (slope: {z_success[0]:.2e})')
+        
+        if len(df[failed_mask]) > 1:
+            # Trend line for failed attempts
+            z_failed = np.polyfit(df[failed_mask]['attempts'], 
+                                df[failed_mask]['time_taken'], 1)
+            p_failed = np.poly1d(z_failed)
+            x_range_failed = np.linspace(df[failed_mask]['attempts'].min(), 
+                                       df[failed_mask]['attempts'].max(), 100)
+            axes[1, 1].plot(x_range_failed, p_failed(x_range_failed), 
+                          color=failure_color, linestyle='--', linewidth=2,
+                          label=f'Failed trend (slope: {z_failed[0]:.2e})')
+        
+        axes[1, 1].set_xlabel('Number of Attempts (Log Scale)', fontsize=12, fontweight='bold')
+        axes[1, 1].set_ylabel('Time (seconds) - Log Scale', fontsize=12, fontweight='bold')
+        axes[1, 1].set_title('Time vs Attempts with Trend Analysis', fontsize=14, fontweight='bold')
+        axes[1, 1].set_xscale('log')  # Logarithmic scale for x-axis
+        axes[1, 1].set_yscale('log')  # Logarithmic scale for y-axis
+        axes[1, 1].grid(True, alpha=0.3)
+        axes[1, 1].legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+        
+        # Add correlation coefficient annotation
+        if len(df) > 1:
+            correlation = df['attempts'].corr(df['time_taken'])
+            axes[1, 1].text(0.02, 0.98, f'Correlation: {correlation:.3f}', 
+                           transform=axes[1, 1].transAxes, fontsize=11,
+                           bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.8),
+                           verticalalignment='top')
+        
+        # Add overall statistics as text box
+        overall_stats = f"""
+Overall Statistics:
+• Total Attacks: {len(df)}
+• Success Rate: {df['success'].mean()*100:.1f}%
+• Avg Attempts: {df['attempts'].mean():.0f}
+• Avg Time: {df['time_taken'].mean():.2f}s
+• Best Method: {success_rates.idxmax()} ({success_rates.max():.1f}%)
+"""
+        
+        # Add statistics text box to the figure
+        fig.text(0.02, 0.02, overall_stats, fontsize=10,
+                bbox=dict(boxstyle="round,pad=0.5", facecolor="lightgray", alpha=0.8),
+                verticalalignment='bottom')
         
         plt.tight_layout()
         
         if save_path:
-            plt.savefig(save_path, dpi=300, bbox_inches='tight')
-            print(f"Performance plot saved to {save_path}")
+            plt.savefig(save_path, dpi=300, bbox_inches='tight', facecolor='white')
+            print(f"Enhanced performance plot saved to {save_path}")
+        
+        plt.show()
+
+    def plot_comprehensive_analysis(self, save_path: str = None):
+        """Generate additional comprehensive analysis plots"""
+        if not self.attack_history:
+            print("No data available for comprehensive analysis")
+            return
+        
+        # Create additional detailed analysis
+        df_data = []
+        for record in self.attack_history:
+            df_data.append({
+                'method': record['method'],
+                'success': record['success'],
+                'attempts': int(record['attempts']),
+                'time_taken': float(record['time_taken']),
+                'password_length': record['password_length'],
+                'password_complexity': record['password_complexity']
+            })
+        
+        df = pd.DataFrame(df_data)
+        
+        # Create comprehensive analysis figure
+        fig, axes = plt.subplots(2, 2, figsize=(16, 12))
+        fig.suptitle('Comprehensive Password Cracking Analysis', 
+                    fontsize=18, fontweight='bold', pad=20)
+        
+        colors = ['#2E86AB', '#A23B72', '#F18F01', '#C73E1D']
+        
+        # Plot 1: Efficiency Analysis (Attempts per Second)
+        efficiency_data = []
+        for method in df['method'].unique():
+            method_data = df[df['method'] == method]
+            if len(method_data) > 0:
+                avg_attempts = method_data['attempts'].mean()
+                avg_time = method_data['time_taken'].mean()
+                efficiency = avg_attempts / avg_time if avg_time > 0 else 0
+                efficiency_data.append({'method': method, 'efficiency': efficiency})
+        
+        efficiency_df = pd.DataFrame(efficiency_data)
+        if not efficiency_df.empty:
+            bars = axes[0, 0].bar(efficiency_df['method'], efficiency_df['efficiency'],
+                                 color=colors[:len(efficiency_df)], alpha=0.8,
+                                 edgecolor='black', linewidth=1.2)
+            axes[0, 0].set_title('Cracking Efficiency (Attempts/Second)', 
+                                fontsize=14, fontweight='bold')
+            axes[0, 0].set_ylabel('Attempts per Second', fontsize=12, fontweight='bold')
+            axes[0, 0].tick_params(axis='x', rotation=45)
+            axes[0, 0].grid(True, alpha=0.3, axis='y')
+            
+            # Add data labels
+            for bar, eff in zip(bars, efficiency_df['efficiency']):
+                height = bar.get_height()
+                axes[0, 0].text(bar.get_x() + bar.get_width()/2., height + height*0.01,
+                               f'{eff:.0f}/s', ha='center', va='bottom', 
+                               fontweight='bold', fontsize=10)
+        
+        # Plot 2: Success Rate vs Password Complexity
+        if 'password_complexity' in df.columns and len(df) > 0:
+            complexity_bins = pd.cut(df['password_complexity'], bins=5)
+            complexity_success = df.groupby(complexity_bins)['success'].mean() * 100
+            
+            bars = axes[0, 1].bar(range(len(complexity_success)), complexity_success.values,
+                                 color=plt.cm.viridis(np.linspace(0, 1, len(complexity_success))),
+                                 alpha=0.8, edgecolor='black', linewidth=1.2)
+            axes[0, 1].set_title('Success Rate vs Password Complexity', 
+                                fontsize=14, fontweight='bold')
+            axes[0, 1].set_ylabel('Success Rate (%)', fontsize=12, fontweight='bold')
+            axes[0, 1].set_xlabel('Password Complexity Range', fontsize=12, fontweight='bold')
+            axes[0, 1].set_xticks(range(len(complexity_success)))
+            axes[0, 1].set_xticklabels([str(bin) for bin in complexity_success.index], rotation=45)
+            axes[0, 1].grid(True, alpha=0.3, axis='y')
+            
+            # Add data labels
+            for bar, rate in zip(bars, complexity_success.values):
+                height = bar.get_height()
+                axes[0, 1].text(bar.get_x() + bar.get_width()/2., height + 1,
+                               f'{rate:.1f}%', ha='center', va='bottom', 
+                               fontweight='bold', fontsize=9)
+        
+        # Plot 3: Method Performance Heatmap
+        performance_metrics = []
+        for method in df['method'].unique():
+            method_data = df[df['method'] == method]
+            if len(method_data) > 0:
+                success_rate = method_data['success'].mean() * 100
+                avg_time = method_data['time_taken'].mean()
+                avg_attempts = method_data['attempts'].mean()
+                performance_metrics.append({
+                    'method': method,
+                    'success_rate': success_rate,
+                    'avg_time': avg_time,
+                    'avg_attempts': avg_attempts
+                })
+        
+        perf_df = pd.DataFrame(performance_metrics)
+        if not perf_df.empty:
+            # Normalize metrics for heatmap
+            metrics_to_plot = ['success_rate', 'avg_time', 'avg_attempts']
+            normalized_data = perf_df[metrics_to_plot].copy()
+            for col in metrics_to_plot:
+                if col == 'avg_time' or col == 'avg_attempts':
+                    # Inverse normalization for metrics where lower is better
+                    normalized_data[col] = 1 - (normalized_data[col] - normalized_data[col].min()) / (normalized_data[col].max() - normalized_data[col].min())
+                else:
+                    # Normal normalization for metrics where higher is better
+                    normalized_data[col] = (normalized_data[col] - normalized_data[col].min()) / (normalized_data[col].max() - normalized_data[col].min())
+            
+            im = axes[1, 0].imshow(normalized_data.T, cmap='RdYlGn', aspect='auto', vmin=0, vmax=1)
+            axes[1, 0].set_title('Method Performance Heatmap\n(Green = Better)', 
+                                fontsize=14, fontweight='bold')
+            axes[1, 0].set_xticks(range(len(perf_df)))
+            axes[1, 0].set_xticklabels(perf_df['method'])
+            axes[1, 0].set_yticks(range(len(metrics_to_plot)))
+            axes[1, 0].set_yticklabels(['Success Rate', 'Time (inv)', 'Attempts (inv)'])
+            
+            # Add values to heatmap
+            for i in range(len(perf_df)):
+                for j in range(len(metrics_to_plot)):
+                    original_value = perf_df.iloc[i][metrics_to_plot[j]]
+                    if metrics_to_plot[j] == 'success_rate':
+                        text = f'{original_value:.1f}%'
+                    elif metrics_to_plot[j] == 'avg_time':
+                        text = f'{original_value:.2f}s'
+                    else:
+                        text = f'{original_value:.0f}'
+                    
+                    axes[1, 0].text(i, j, text, ha='center', va='center', 
+                                   fontweight='bold', fontsize=10,
+                                   color='white' if normalized_data.iloc[i, j] < 0.5 else 'black')
+            
+            plt.colorbar(im, ax=axes[1, 0], shrink=0.6)
+        
+        # Plot 4: Cumulative Success Over Time
+        if len(df) > 1:
+            df_sorted = df.sort_values('time_taken')
+            cumulative_success = df_sorted['success'].cumsum()
+            axes[1, 1].plot(df_sorted['time_taken'], cumulative_success, 
+                          linewidth=3, color='#2E8B57', marker='o', markersize=4)
+            axes[1, 1].fill_between(df_sorted['time_taken'], cumulative_success, alpha=0.3, color='#2E8B57')
+            axes[1, 1].set_title('Cumulative Success Over Time', fontsize=14, fontweight='bold')
+            axes[1, 1].set_xlabel('Time (seconds)', fontsize=12, fontweight='bold')
+            axes[1, 1].set_ylabel('Cumulative Successful Cracks', fontsize=12, fontweight='bold')
+            axes[1, 1].grid(True, alpha=0.3)
+            
+            # Add final value annotation
+            final_success = cumulative_success.iloc[-1]
+            final_time = df_sorted['time_taken'].iloc[-1]
+            axes[1, 1].annotate(f'Final: {final_success} successes', 
+                              xy=(final_time, final_success),
+                              xytext=(final_time * 0.7, final_success * 0.8),
+                              arrowprops=dict(arrowstyle='->', color='black'),
+                              fontweight='bold', fontsize=10,
+                              bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.8))
+        
+        plt.tight_layout()
+        
+        if save_path:
+            comprehensive_path = save_path.replace('.png', '_comprehensive.png')
+            plt.savefig(comprehensive_path, dpi=300, bbox_inches='tight', facecolor='white')
+            print(f"Comprehensive analysis plot saved to {comprehensive_path}")
         
         plt.show()
     
