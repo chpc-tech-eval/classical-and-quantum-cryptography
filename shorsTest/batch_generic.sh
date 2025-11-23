@@ -12,6 +12,7 @@ USE_IBM=false
 SHOTS=2048
 BACKEND=""
 GPU=false
+N_COUNT=""
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -28,25 +29,34 @@ while [[ $# -gt 0 ]]; do
             SHOTS="$2"
             shift 2
             ;;
+        --n_count)
+            N_COUNT="$2"
+            shift 2
+            ;;
         --gpu)
             GPU=true
             shift
             ;;
         *)
             echo "Unknown option: $1"
-            echo "Usage: $0 [--use_ibm] [--backend NAME] [--shots N] [--gpu]"
+            echo "Usage: $0 [OPTIONS]"
             echo ""
             echo "Options:"
             echo "  --use_ibm           Use IBM Quantum hardware"
             echo "  --backend NAME      Specific IBM backend (implies --use_ibm)"
             echo "  --shots N           Number of shots (default: 2048)"
+            echo "  --n_count N         Number of counting qubits (default: auto)"
             echo "  --gpu               Use GPU acceleration"
             echo ""
+            echo "Test cases: 6, 10, 12, 14, 15, 21"
+            echo ""
             echo "Examples:"
-            echo "  ./batch_generic.sh                           # CPU simulation"
-            echo "  ./batch_generic.sh --gpu                     # GPU simulation"
-            echo "  ./batch_generic.sh --use_ibm                 # Quantum hardware"
-            echo "  ./batch_generic.sh --backend ibm_brisbane    # Specific backend"
+            echo "  ./batch_generic.sh                                 # CPU simulation"
+            echo "  ./batch_generic.sh --gpu                           # GPU simulation"
+            echo "  ./batch_generic.sh --shots 4096                    # Custom shots"
+            echo "  ./batch_generic.sh --shots 8192 --n_count 12       # Custom shots + qubits"
+            echo "  ./batch_generic.sh --use_ibm                       # Quantum hardware"
+            echo "  ./batch_generic.sh --backend ibm_brisbane          # Specific backend"
             exit 1
             ;;
     esac
@@ -85,11 +95,15 @@ echo ""
 CSV_FILE="$RESULTS_DIR/results.csv"
 LOG_FILE="$RESULTS_DIR/batch_log.txt"
 
-# Test cases
-GENERIC_TEST_CASES=(15 21 33 35)
+# Test cases: 6 (lower), 10, 12, 14, 15 (overlap with actual), 21 (higher)
+GENERIC_TEST_CASES=(6 10 12 14 15 21)
 
 # Build command flags
 CMD_FLAGS="--shots $SHOTS --max_attempts 1 --csv $CSV_FILE --circuits_dir $CIRCUITS_DIR"
+
+if [ -n "$N_COUNT" ]; then
+    CMD_FLAGS="$CMD_FLAGS --n_count $N_COUNT"
+fi
 
 if [ "$USE_IBM" = true ]; then
     CMD_FLAGS="$CMD_FLAGS --use_ibm"
@@ -106,10 +120,16 @@ echo "GENERIC SHOR'S ALGORITHM - $MODE_NAME" | tee -a "$LOG_FILE"
 echo "======================================================================" | tee -a "$LOG_FILE"
 echo "Mode: $MODE_NAME" | tee -a "$LOG_FILE"
 echo "Shots: $SHOTS" | tee -a "$LOG_FILE"
+if [ -n "$N_COUNT" ]; then
+    echo "Counting qubits: $N_COUNT" | tee -a "$LOG_FILE"
+fi
 if [ -n "$BACKEND" ]; then
     echo "Backend: $BACKEND" | tee -a "$LOG_FILE"
 fi
 echo "Test cases: ${GENERIC_TEST_CASES[@]}" | tee -a "$LOG_FILE"
+echo "  • N=6  (lower bound)" | tee -a "$LOG_FILE"
+echo "  • N=10, 12, 14, 15 (overlap with actual)" | tee -a "$LOG_FILE"
+echo "  • N=21 (upper bound)" | tee -a "$LOG_FILE"
 echo "======================================================================" | tee -a "$LOG_FILE"
 echo "" | tee -a "$LOG_FILE"
 

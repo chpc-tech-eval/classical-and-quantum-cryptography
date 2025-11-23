@@ -13,6 +13,9 @@ USE_IBM=false
 SHOTS=4096
 BACKEND=""
 GPU=false
+N_COUNT=""
+SPECIFIC_N=""
+SPECIFIC_A=""
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -29,23 +32,42 @@ while [[ $# -gt 0 ]]; do
             SHOTS="$2"
             shift 2
             ;;
+        --n_count)
+            N_COUNT="$2"
+            shift 2
+            ;;
+        --N)
+            SPECIFIC_N="$2"
+            shift 2
+            ;;
+        --a)
+            SPECIFIC_A="$2"
+            shift 2
+            ;;
         --gpu)
             GPU=true
             shift
             ;;
         *)
             echo "Unknown option: $1"
-            echo "Usage: $0 [--use_ibm] [--backend NAME] [--shots N] [--gpu]"
+            echo "Usage: $0 [OPTIONS]"
             echo ""
             echo "Options:"
             echo "  --use_ibm           Use IBM Quantum hardware"
             echo "  --backend NAME      Specific IBM backend (implies --use_ibm)"
             echo "  --shots N           Number of shots (default: 4096)"
+            echo "  --n_count N         Number of counting qubits (default: 12)"
+            echo "  --N VALUE           Test only specific N (default: all)"
+            echo "  --a VALUE           Test only specific base a (requires --N)"
             echo "  --gpu               Use GPU acceleration"
             echo ""
             echo "Examples:"
-            echo "  ./batch_actual.sh                                    # CPU simulation"
+            echo "  ./batch_actual.sh                                    # CPU simulation, all tests"
             echo "  ./batch_actual.sh --gpu                              # GPU simulation"
+            echo "  ./batch_actual.sh --shots 8192                       # Custom shots"
+            echo "  ./batch_actual.sh --N 15                             # Only N=15, all bases"
+            echo "  ./batch_actual.sh --N 15 --a 2                       # Only N=15, a=2"
+            echo "  ./batch_actual.sh --N 15 --a 2 --shots 8192          # Custom everything"
             echo "  ./batch_actual.sh --use_ibm                          # Auto-select backend"
             echo "  ./batch_actual.sh --backend ibm_brisbane             # Use specific backend"
             echo "  ./batch_actual.sh --backend ibm_kyoto --shots 8192   # Custom backend + shots"
@@ -53,6 +75,12 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
+
+# Validate --a requires --N
+if [ -n "$SPECIFIC_A" ] && [ -z "$SPECIFIC_N" ]; then
+    echo "[ERROR] --a requires --N to be specified"
+    exit 1
+fi
 
 # Determine mode and folder name
 if [ "$USE_IBM" = true ]; then
@@ -95,16 +123,47 @@ declare -A TEST_CASES=(
     [15]="2 4 7 8 11 13"
 )
 
-# Count total tests
-TOTAL_TESTS=0
-for N in "${!TEST_CASES[@]}"; do
-    for a in ${TEST_CASES[$N]}; do
-        ((TOTAL_TESTS++))
+# Filter test cases if --N or --a specified
+if [ -n "$SPECIFIC_N" ]; then
+    if [ -z "${TEST_CASES[$SPECIFIC_N]}" ]; then
+        echo "[ERROR] Invalid N=$SPECIFIC_N. Valid values: ${!TEST_CASES[@]}"
+        exit 1
+    fi
+    
+    if [ -n "$SPECIFIC_A" ]; then
+        # Check if a is valid for this N
+        if [[ ! " ${TEST_CASES[$SPECIFIC_N]} " =~ " $SPECIFIC_A " ]]; then
+            echo "[ERROR] Invalid a=$SPECIFIC_A for N=$SPECIFIC_N"
+            echo "Valid bases for N=$SPECIFIC_N: ${TEST_CASES[$SPECIFIC_N]}"
+            exit 1
+        fi
+        # Only test this specific (N, a) pair
+        FILTERED_TESTS=( "$SPECIFIC_N:$SPECIFIC_A" )
+    else
+        # Test all bases for this N
+        FILTERED_TESTS=()
+        for a in ${TEST_CASES[$SPECIFIC_N]}; do
+            FILTERED_TESTS+=( "$SPECIFIC_N:$a" )
+        done
+    fi
+else
+    # Test all (N, a) pairs
+    FILTERED_TESTS=()
+    for N in $(echo "${!TEST_CASES[@]}" | tr ' ' '\n' | sort -n); do
+        for a in ${TEST_CASES[$N]}; do
+            FILTERED_TESTS+=( "$N:$a" )
+        done
     done
-done
+fi
+
+TOTAL_TESTS=${#FILTERED_TESTS[@]}
 
 # Build command flags
 CMD_FLAGS="--shots $SHOTS --csv $CSV_FILE --circuits_dir $CIRCUITS_DIR"
+
+if [ -n "$N_COUNT" ]; then
+    CMD_FLAGS="$CMD_FLAGS --n_count $N_COUNT"
+fi
 
 if [ "$USE_IBM" = true ]; then
     CMD_FLAGS="$CMD_FLAGS --use_ibm"
@@ -124,6 +183,18 @@ if [ -n "$BACKEND" ]; then
     echo "Backend: $BACKEND" | tee -a "$LOG_FILE"
 fi
 echo "Shots: $SHOTS" | tee -a "$LOG_FILE"
+if [ -n "$N_COUNT" ]; then
+    echo "Counting qubits: $N_COUNT" | tee -a "$LOG_FILE"
+fi
+if [ -n "$SPECIFIC_N" ]; then
+    if [ -n "$SPECIFIC_A" ]; then
+        echo "Testing: N=$SPECIFIC_N, a=$SPECIFIC_A" | tee -a "$LOG_FILE"
+    else
+        echo "Testing: N=$SPECIFIC_N (all bases)" | tee -a "$LOG_FILE"
+    fi
+else
+    echo "Testing: All N values (all bases)" | tee -a "$LOG_FILE"
+fi
 echo "Total tests: $TOTAL_TESTS" | tee -a "$LOG_FILE"
 echo "======================================================================" | tee -a "$LOG_FILE"
 echo "" | tee -a "$LOG_FILE"
@@ -133,34 +204,35 @@ TEST_NUM=0
 SUCCESSES=0
 FAILURES=0
 
-for N in $(echo "${!TEST_CASES[@]}" | tr ' ' '\n' | sort -n); do
-    for a in ${TEST_CASES[$N]}; do
-        ((TEST_NUM++))
-        
-        echo "======================================================================" | tee -a "$LOG_FILE"
-        echo "[TEST $TEST_NUM/$TOTAL_TESTS] N=$N, a=$a" | tee -a "$LOG_FILE"
-        echo "======================================================================" | tee -a "$LOG_FILE"
-        
-        START=$(date +%s)
-        
-        python3 shor_actual.py --N $N --a $a $CMD_FLAGS 2>&1 | tee -a "$LOG_FILE"
-        EXIT_CODE=${PIPESTATUS[0]}
-        
-        if [ $EXIT_CODE -eq 0 ]; then
-            ((SUCCESSES++))
-            RESULT="✅ SUCCESS"
-        else
-            ((FAILURES++))
-            RESULT="❌ FAILED"
-        fi
-        
-        END=$(date +%s)
-        ELAPSED=$((END - START))
-        
-        echo "" | tee -a "$LOG_FILE"
-        echo "⏱️  Test time: ${ELAPSED}s - $RESULT" | tee -a "$LOG_FILE"
-        echo "" | tee -a "$LOG_FILE"
-    done
+for test_pair in "${FILTERED_TESTS[@]}"; do
+    ((TEST_NUM++))
+    
+    N="${test_pair%%:*}"
+    a="${test_pair##*:}"
+    
+    echo "======================================================================" | tee -a "$LOG_FILE"
+    echo "[TEST $TEST_NUM/$TOTAL_TESTS] N=$N, a=$a" | tee -a "$LOG_FILE"
+    echo "======================================================================" | tee -a "$LOG_FILE"
+    
+    START=$(date +%s)
+    
+    python3 shor_actual.py --N $N --a $a $CMD_FLAGS 2>&1 | tee -a "$LOG_FILE"
+    EXIT_CODE=${PIPESTATUS[0]}
+    
+    if [ $EXIT_CODE -eq 0 ]; then
+        ((SUCCESSES++))
+        RESULT="✅ SUCCESS"
+    else
+        ((FAILURES++))
+        RESULT="❌ FAILED"
+    fi
+    
+    END=$(date +%s)
+    ELAPSED=$((END - START))
+    
+    echo "" | tee -a "$LOG_FILE"
+    echo "⏱️  Test time: ${ELAPSED}s - $RESULT" | tee -a "$LOG_FILE"
+    echo "" | tee -a "$LOG_FILE"
 done
 
 # Final summary
