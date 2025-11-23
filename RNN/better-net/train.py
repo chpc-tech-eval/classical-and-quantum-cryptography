@@ -5,28 +5,39 @@ import torch.optim as optim
 import numpy as np
 from model import PasswordRNN
 from data_prep import x_train, y_train, x_val, y_val, vocab_size
+import time
+import os
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
 
-# Model with multiple LSTM layers
+# More conservative model to prevent overfitting
 model = PasswordRNN(
     vocab_size=vocab_size,
-    embed_dim=128,
-    hidden_dim=256,
-    num_layers=2,
-    dropout=0.2
+    embed_dim=256,  # Reduced from 256
+    hidden_dim=512,  # Reduced from 512
+    num_layers=4,   # Reduced from 3
+    dropout=0.5      # Increased dropout
 ).to(device)
 
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-5)
-scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=2, factor=0.5)
+# Lower learning rate with more weight decay
+optimizer = optim.AdamW(model.parameters(), lr=0.0005, weight_decay=0.02)
 
-num_epochs = 50
-batch_size = 64
+# More gradual learning rate scheduler
+scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=50, eta_min=0.0001)
+
+num_epochs = 100
+batch_size = 64  # Smaller batch size
 best_val_loss = float('inf')
-patience = 5
+patience = 15    # More patience
 patience_counter = 0
+
+# For tracking metrics
+train_losses = []
+val_losses = []
+train_accuracies = []
+val_accuracies = []
 
 def calculate_accuracy(outputs, targets):
     """Calculate prediction accuracy"""
@@ -34,30 +45,54 @@ def calculate_accuracy(outputs, targets):
     correct = (predicted == targets).float()
     return correct.mean().item()
 
-print("Starting training...")
+def add_label_smoothing(targets, num_classes, smoothing=0.1):
+    """Add label smoothing to prevent overconfidence"""
+    confidence = 1.0 - smoothing
+    smoothing_value = smoothing / (num_classes - 1)
+    one_hot = torch.full((targets.size(0), num_classes), smoothing_value).to(device)
+    one_hot.scatter_(1, targets.unsqueeze(1), confidence)
+    return one_hot
+
+print("Starting improved training with overfitting prevention...")
+print(f"Model parameters: {sum(p.numel() for p in model.parameters()):,}")
+
 for epoch in range(num_epochs):
+    start_time = time.time()
+    
     # Training phase
     model.train()
     train_loss = 0
     train_acc = 0
     num_batches = 0
     
-    for i in range(0, len(x_train), batch_size):
-        inputs = x_train[i:i+batch_size].to(device)
-        targets = y_train[i:i+batch_size].to(device)
+    # Shuffle training data each epoch
+    indices = torch.randperm(len(x_train))
+    x_train_shuffled = x_train[indices]
+    y_train_shuffled = y_train[indices]
+    
+    for i in range(0, len(x_train_shuffled), batch_size):
+        inputs = x_train_shuffled[i:i+batch_size].to(device)
+        targets = y_train_shuffled[i:i+batch_size].to(device)
         
         outputs, _ = model(inputs)
-        loss = criterion(outputs, targets)
+        
+        # Use label smoothing
+        smoothed_targets = add_label_smoothing(targets, vocab_size, smoothing=0.1)
+        loss = criterion(outputs, smoothed_targets)
         
         optimizer.zero_grad()
         loss.backward()
         
-        # Gradient clipping to prevent explosion
-        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+        # Gentle gradient clipping
+        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=0.5)
         optimizer.step()
         
+        # Calculate accuracy with original targets (no smoothing)
+        with torch.no_grad():
+            acc = calculate_accuracy(outputs, targets)
+        
         train_loss += loss.item()
-        train_acc += calculate_accuracy(outputs, targets)
+        train_acc += acc
         num_batches += 1
     
     avg_train_loss = train_loss / num_batches
@@ -75,7 +110,7 @@ for epoch in range(num_epochs):
             targets = y_val[i:i+batch_size].to(device)
             
             outputs, _ = model(inputs)
-            loss = criterion(outputs, targets)
+            loss = criterion(outputs, targets)  # No smoothing for validation
             
             val_loss += loss.item()
             val_acc += calculate_accuracy(outputs, targets)
@@ -84,23 +119,69 @@ for epoch in range(num_epochs):
     avg_val_loss = val_loss / num_val_batches
     avg_val_acc = val_acc / num_val_batches
     
-    scheduler.step(avg_val_loss)
+    # Update learning rate
+    scheduler.step()
     
-    print(f"Epoch {epoch+1}/{num_epochs}")
+    # Track metrics
+    train_losses.append(avg_train_loss)
+    val_losses.append(avg_val_loss)
+    train_accuracies.append(avg_train_acc)
+    val_accuracies.append(avg_val_acc)
+    
+    epoch_time = time.time() - start_time
+    
+    print(f"Epoch {epoch+1}/{num_epochs} ({epoch_time:.2f}s)")
     print(f"  Train Loss: {avg_train_loss:.4f}, Train Acc: {avg_train_acc:.4f}")
     print(f"  Val Loss: {avg_val_loss:.4f}, Val Acc: {avg_val_acc:.4f}")
     print(f"  LR: {optimizer.param_groups[0]['lr']:.6f}")
     
-    # Early stopping
-    if avg_val_loss < best_val_loss:
+    # Early stopping with improvement threshold
+    if avg_val_loss < best_val_loss - 0.0005:  # Smaller improvement threshold
         best_val_loss = avg_val_loss
         patience_counter = 0
         torch.save(model.state_dict(), "password_rnn.pth")
-        print("  ↳ Model saved!")
+        print("  ↳ Model saved! (improvement)")
     else:
         patience_counter += 1
         if patience_counter >= patience:
-            print("Early stopping triggered!")
+            print(f"Early stopping triggered after {epoch+1} epochs!")
+            print(f"Best validation loss: {best_val_loss:.4f}")
             break
+    
+    # Print progress every 5 epochs
+    if (epoch + 1) % 5 == 0:
+        print(f"--- Progress: {epoch+1}/{num_epochs} epochs completed ---")
 
 print("Training completed!")
+print(f"Final best validation loss: {best_val_loss:.4f}")
+
+# Plotting function
+try:
+    import matplotlib.pyplot as plt
+    
+    plt.figure(figsize=(12, 4))
+    
+    plt.subplot(1, 2, 1)
+    plt.plot(train_losses, label='Train Loss')
+    plt.plot(val_losses, label='Val Loss')
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.legend()
+    plt.title('Training and Validation Loss')
+    plt.grid(True, alpha=0.3)
+    
+    plt.subplot(1, 2, 2)
+    plt.plot(train_accuracies, label='Train Accuracy')
+    plt.plot(val_accuracies, label='Val Accuracy')
+    plt.xlabel('Epoch')
+    plt.ylabel('Accuracy')
+    plt.legend()
+    plt.title('Training and Validation Accuracy')
+    plt.grid(True, alpha=0.3)
+    
+    plt.tight_layout()
+    plt.savefig('training_metrics.png', dpi=150, bbox_inches='tight')
+    print("Training metrics plot saved as 'training_metrics.png'")
+    
+except ImportError:
+    print("Matplotlib not available, skipping plots")
