@@ -3,137 +3,75 @@
 shor_generic.py
 
 GENERIC implementation of Shor's algorithm with comprehensive data logging.
-Logs all important metrics to JSON for later analysis and graphing.
+Supports both simulation and IBM Quantum hardware execution.
+Exports circuit diagrams as PNG files.
 
 Usage:
-  python3 shor_generic.py --N 21 --output results.json
-  python3 shor_generic.py --N 35 --a 2 --shots 4096
+  # Simulation mode
+  python3 shor_generic.py --N 21 --shots 2048 --csv generic_sim.csv --circuits_dir circuits
+
+  # IBM Quantum mode
+  python3 shor_generic.py --N 15 --shots 4096 --csv generic_quantum.csv --circuits_dir circuits --use_ibm
+
+  # With specific backend
+  python3 shor_generic.py --N 21 --use_ibm --backend ibm_brisbane --shots 2048
 """
 
 import argparse
 import math
 import sys
 import random
-import json
 import time
 from datetime import datetime
-from fractions import Fraction
 from collections import Counter
+import numpy as np
 
+# Import shared functions
+try:
+    from functions import (
+        gcd, is_prime, is_power, classical_order_finding,
+        check_candidate_period, continued_fractions_convergents,
+        qft_dagger, save_circuit_png, save_results_json, append_to_csv
+    )
+except ImportError as e:
+    print(f"[ERROR] Could not import functions.py: {e}")
+    print("Make sure functions.py is in the same directory.")
+    sys.exit(1)
+
+# Import Qiskit
 try:
     from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
     from qiskit_aer import Aer
     from qiskit import transpile
 except ImportError as e:
-    print(f"Error: Missing required packages. Install with:")
-    print(f"  pip install qiskit qiskit-aer")
+    print(f"[ERROR] Missing required packages. Install with:")
+    print(f"  pip install qiskit qiskit-aer matplotlib")
     sys.exit(1)
 
-import numpy as np
+# Try to import IBM Quantum runtime
+try:
+    from qiskit_ibm_runtime import QiskitRuntimeService, SamplerV2 as Sampler
+    HAVE_IBM = True
+except ImportError:
+    HAVE_IBM = False
 
 
-def gcd(a, b):
-    """Compute greatest common divisor using Euclid's algorithm."""
-    while b:
-        a, b = b, a % b
-    return a
-
-
-def is_prime(n):
-    """Check if n is prime."""
-    if n < 2:
-        return False
-    if n == 2:
-        return True
-    if n % 2 == 0:
-        return False
-    for i in range(3, int(math.sqrt(n)) + 1, 2):
-        if n % i == 0:
-            return False
-    return True
-
-
-def is_power(N):
-    """Check if N is a perfect power (N = a^b for some a, b > 1)."""
-    for b in range(2, int(math.log2(N)) + 1):
-        a = int(round(N ** (1.0 / b)))
-        if a ** b == N:
-            return True, a, b
-    return False, None, None
-
-
-def classical_order_finding(a, N):
-    """Classical order finding: find smallest r > 0 such that a^r mod N = 1."""
-    if gcd(a, N) != 1:
-        return None
-    r = 1
-    result = a % N
-    while result != 1:
-        result = (result * a) % N
-        r += 1
-        if r > N:
-            return None
-    return r
-
-
-def check_candidate_period(a, r, N):
-    """Verify that r is a valid period for a mod N."""
-    return pow(a, r, N) == 1
-
-
-def continued_fractions_convergents(phi, Q):
-    """Find the best rational approximation s/r to phi where r < Q using continued fractions."""
-    if phi == 0:
-        return (0, 1)
-    
-    a_list = [int(phi)]
-    remainders = [phi - a_list[0]]
-    convergents = [(a_list[0], 1)]
-    
-    for i in range(1, 30):
-        if abs(remainders[i-1]) < 1e-10:
-            break
-        
-        next_a = int(1 / remainders[i-1])
-        a_list.append(next_a)
-        remainders.append(1 / remainders[i-1] - next_a)
-        
-        if i == 1:
-            p = a_list[1] * a_list[0] + 1
-            q = a_list[1]
-        else:
-            p = a_list[i] * convergents[i-1][0] + convergents[i-2][0]
-            q = a_list[i] * convergents[i-1][1] + convergents[i-2][1]
-        
-        convergents.append((p, q))
-        
-        if q >= Q:
-            break
-    
-    for p, q in reversed(convergents):
-        if q < Q and q > 0:
-            return (p, q)
-    
-    return (0, 1)
-
-
-def qft_dagger(n):
-    """Create inverse Quantum Fourier Transform circuit for n qubits."""
-    qc = QuantumCircuit(n)
-    
-    for qubit in range(n // 2):
-        qc.swap(qubit, n - qubit - 1)
-    
-    for j in range(n):
-        for m in range(j):
-            qc.cp(-math.pi / float(2 ** (j - m)), m, j)
-        qc.h(j)
-    
-    return qc
-
+# ============================================================================
+# QUANTUM CIRCUIT CONSTRUCTION
+# ============================================================================
 
 def modular_exponentiation_gate(a, N, n_target):
-    """Create a quantum gate that performs |x⟩ → |ax mod N⟩"""
+    """
+    Create a quantum gate that performs |x⟩ → |ax mod N⟩.
+    
+    Args:
+        a: Base for modular exponentiation
+        N: Modulus
+        n_target: Number of target qubits
+    
+    Returns:
+        Gate: Unitary gate implementing modular multiplication
+    """
     size = 2 ** n_target
     permutation = np.zeros((size, size), dtype=complex)
     
@@ -151,7 +89,17 @@ def modular_exponentiation_gate(a, N, n_target):
 
 
 def shor_circuit_generic(a, N, n_count=None):
-    """Create generic Shor's algorithm circuit for ANY N."""
+    """
+    Create generic Shor's algorithm circuit for ANY N.
+    
+    Args:
+        a: Base (coprime to N)
+        N: Number to factor
+        n_count: Number of counting qubits (auto-calculated if None)
+    
+    Returns:
+        tuple: (QuantumCircuit, n_target, n_count)
+    """
     n_target = math.ceil(math.log2(N))
     if n_count is None:
         n_count = max(8, 2 * n_target)
@@ -188,11 +136,26 @@ def shor_circuit_generic(a, N, n_count=None):
     return qc, n_target, n_count
 
 
-def run_shor_generic_with_logging(N, a=None, shots=2048, n_count=None, backend=None):
+# ============================================================================
+# MAIN ALGORITHM
+# ============================================================================
+
+def run_shor_generic_with_logging(N, a=None, shots=2048, n_count=None, 
+                                   backend=None, circuits_dir=None, mode='simulation'):
     """
     Run Shor's algorithm with comprehensive logging.
     
-    Returns a dictionary with all metrics for analysis.
+    Args:
+        N: Number to factor
+        a: Base (random if None)
+        shots: Number of measurements
+        n_count: Number of counting qubits (auto if None)
+        backend: Qiskit backend to use
+        circuits_dir: Directory to save circuit PNGs (None to skip)
+        mode: 'simulation' or 'quantum'
+    
+    Returns:
+        dict: Complete log data with all metrics
     """
     start_time = time.time()
     log_data = {
@@ -201,7 +164,8 @@ def run_shor_generic_with_logging(N, a=None, shots=2048, n_count=None, backend=N
             'N': N,
             'a': a,
             'shots': shots,
-            'n_count': n_count
+            'n_count': n_count,
+            'mode': mode
         },
         'preprocessing': {},
         'quantum_execution': {},
@@ -212,11 +176,15 @@ def run_shor_generic_with_logging(N, a=None, shots=2048, n_count=None, backend=N
     
     print(f"\n{'='*70}")
     print(f"GENERIC SHOR'S ALGORITHM - Factoring N = {N}")
+    print(f"Mode: {mode.upper()}")
     print(f"{'='*70}\n")
     
-    # Preprocessing
+    # ========================================================================
+    # PREPROCESSING
+    # ========================================================================
     preprocess_start = time.time()
     
+    # Basic checks
     if N < 4:
         log_data['results'] = {'success': False, 'error': f'N must be at least 4'}
         return log_data
@@ -244,7 +212,7 @@ def run_shor_generic_with_logging(N, a=None, shots=2048, n_count=None, backend=N
         }
         return log_data
     
-    # Choose random 'a'
+    # Choose random 'a' coprime to N
     if a is None:
         while True:
             a = random.randint(2, N - 1)
@@ -274,7 +242,9 @@ def run_shor_generic_with_logging(N, a=None, shots=2048, n_count=None, backend=N
     print(f"  N = {N}, a = {a}")
     print(f"  Classical period: r = {classical_r}")
     
-    # Build circuit
+    # ========================================================================
+    # CIRCUIT CONSTRUCTION
+    # ========================================================================
     circuit_start = time.time()
     
     if n_count is None:
@@ -290,6 +260,10 @@ def run_shor_generic_with_logging(N, a=None, shots=2048, n_count=None, backend=N
         'gate_count': len(qc.data)
     }
     
+    # Save circuit diagram
+    if circuits_dir:
+        save_circuit_png(qc, N, a, f'generic_{mode}', circuits_dir)
+    
     circuit_time = time.time() - circuit_start
     log_data['timing']['circuit_construction'] = circuit_time
     
@@ -298,7 +272,9 @@ def run_shor_generic_with_logging(N, a=None, shots=2048, n_count=None, backend=N
     print(f"  Circuit depth: {qc.depth()}")
     print(f"  Construction time: {circuit_time:.2f}s")
     
-    # Transpile and run
+    # ========================================================================
+    # TRANSPILATION
+    # ========================================================================
     if backend is None:
         backend = Aer.get_backend('aer_simulator')
     
@@ -316,11 +292,40 @@ def run_shor_generic_with_logging(N, a=None, shots=2048, n_count=None, backend=N
     print(f"  Transpiled depth: {transpiled.depth()}")
     print(f"  Time: {transpile_time:.2f}s")
     
-    # Execute
+    # ========================================================================
+    # EXECUTION
+    # ========================================================================
     execution_start = time.time()
-    job = backend.run(transpiled, shots=shots)
-    result = job.result()
-    counts = result.get_counts()
+    
+    if mode == 'quantum' and HAVE_IBM:
+        # Use IBM Quantum Sampler
+        sampler = Sampler(backend)
+        job = sampler.run([transpiled], shots=shots)
+        print(f"\n[EXECUTION]")
+        print(f"  Job ID: {job.job_id()}")
+        result = job.result()
+        
+        # Extract counts from result
+        pub_result = result[0]
+        data_bin = pub_result.data
+        
+        if hasattr(data_bin, 'classical'):
+            counts = data_bin.classical.get_counts()
+        elif hasattr(data_bin, 'meas'):
+            counts = data_bin.meas.get_counts()
+        else:
+            attrs = [attr for attr in dir(data_bin) if not attr.startswith('_')]
+            if attrs:
+                counts = getattr(data_bin, attrs[0]).get_counts()
+            else:
+                raise RuntimeError("Could not extract measurements")
+    else:
+        # Use local simulator
+        job = backend.run(transpiled, shots=shots)
+        result = job.result()
+        counts = result.get_counts()
+        print(f"\n[EXECUTION]")
+    
     execution_time = time.time() - execution_start
     
     log_data['timing']['execution'] = execution_time
@@ -341,11 +346,12 @@ def run_shor_generic_with_logging(N, a=None, shots=2048, n_count=None, backend=N
         })
     log_data['quantum_execution']['top_measurements'] = top_measurements
     
-    print(f"\n[EXECUTION]")
     print(f"  Time: {execution_time:.2f}s")
     print(f"  Distinct outcomes: {len(counts)}")
     
-    # Post-processing
+    # ========================================================================
+    # POST-PROCESSING
+    # ========================================================================
     postprocess_start = time.time()
     
     Q = 2 ** n_count
@@ -376,7 +382,7 @@ def run_shor_generic_with_logging(N, a=None, shots=2048, n_count=None, backend=N
         
         all_candidates.append(candidate)
     
-    log_data['postprocessing']['period_candidates'] = all_candidates[:20]  # Top 20
+    log_data['postprocessing']['period_candidates'] = all_candidates[:20]
     log_data['postprocessing']['valid_periods_found'] = len(successful_periods)
     
     postprocess_time = time.time() - postprocess_start
@@ -404,7 +410,9 @@ def run_shor_generic_with_logging(N, a=None, shots=2048, n_count=None, backend=N
     print(f"\n[PERIOD FOUND]")
     print(f"  r = {r} (matches classical: {r == classical_r})")
     
-    # Extract factors
+    # ========================================================================
+    # FACTOR EXTRACTION
+    # ========================================================================
     if r % 2 != 0:
         log_data['results'] = {
             'success': False,
@@ -446,7 +454,7 @@ def run_shor_generic_with_logging(N, a=None, shots=2048, n_count=None, backend=N
         }
         
         print(f"\n{'='*70}")
-        print(f"SUCCESS! {N} = {factor} × {other_factor}")
+        print(f"✓ SUCCESS! {N} = {factor} × {other_factor}")
         print(f"Total time: {total_time:.2f}s")
         print(f"{'='*70}\n")
         
@@ -461,82 +469,121 @@ def run_shor_generic_with_logging(N, a=None, shots=2048, n_count=None, backend=N
     return log_data
 
 
-def save_results(log_data, filename):
-    """Save results to JSON file."""
-    with open(filename, 'w') as f:
-        json.dump(log_data, f, indent=2)
-    print(f"\n[SAVED] Results written to {filename}")
-
-
-def append_to_csv(log_data, filename):
-    """Append results to CSV for easy graphing."""
-    import csv
-    import os
-    
-    file_exists = os.path.isfile(filename)
-    
-    with open(filename, 'a', newline='') as f:
-        fieldnames = [
-            'timestamp', 'N', 'a', 'shots', 'n_count',
-            'success', 'factors', 'period', 'classical_period', 'matches_classical',
-            'total_qubits', 'circuit_depth', 'transpiled_depth',
-            'distinct_outcomes', 'valid_periods_found',
-            'preprocessing_time', 'circuit_time', 'transpile_time',
-            'execution_time', 'postprocess_time', 'total_time',
-            'method'
-        ]
-        
-        writer = csv.DictWriter(f, fieldnames=fieldnames)
-        
-        if not file_exists:
-            writer.writeheader()
-        
-        row = {
-            'timestamp': log_data['timestamp'],
-            'N': log_data['input_parameters']['N'],
-            'a': log_data['input_parameters'].get('a', 'N/A'),
-            'shots': log_data['input_parameters']['shots'],
-            'n_count': log_data['input_parameters'].get('n_count', 'auto'),
-            'success': log_data['results'].get('success', False),
-            'factors': str(log_data['results'].get('factors', [])),
-            'period': log_data['results'].get('period', 'N/A'),
-            'classical_period': log_data['preprocessing'].get('classical_period', 'N/A'),
-            'matches_classical': log_data.get('postprocessing', {}).get('found_period', {}).get('matches_classical', 'N/A'),
-            'total_qubits': log_data.get('quantum_execution', {}).get('circuit', {}).get('total_qubits', 'N/A'),
-            'circuit_depth': log_data.get('quantum_execution', {}).get('circuit', {}).get('original_depth', 'N/A'),
-            'transpiled_depth': log_data.get('quantum_execution', {}).get('transpiled', {}).get('depth', 'N/A'),
-            'distinct_outcomes': log_data.get('quantum_execution', {}).get('measurements', {}).get('distinct_outcomes', 'N/A'),
-            'valid_periods_found': log_data.get('postprocessing', {}).get('valid_periods_found', 'N/A'),
-            'preprocessing_time': log_data.get('timing', {}).get('preprocessing', 0),
-            'circuit_time': log_data.get('timing', {}).get('circuit_construction', 0),
-            'transpile_time': log_data.get('timing', {}).get('transpilation', 0),
-            'execution_time': log_data.get('timing', {}).get('execution', 0),
-            'postprocess_time': log_data.get('timing', {}).get('postprocessing', 0),
-            'total_time': log_data.get('timing', {}).get('total', 0),
-            'method': log_data['results'].get('method', 'quantum')
-        }
-        
-        writer.writerow(row)
-    
-    print(f"[SAVED] Results appended to {filename}")
-
+# ============================================================================
+# MAIN ENTRY POINT
+# ============================================================================
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Generic Shor's algorithm with comprehensive logging"
+        description="Generic Shor's algorithm with comprehensive logging",
+        formatter_class=argparse.RawDescriptionHelpFormatter
     )
     
-    parser.add_argument('--N', type=int, required=True, help='Number to factor')
-    parser.add_argument('--a', type=int, default=None, help='Base (default: random)')
-    parser.add_argument('--shots', type=int, default=2048, help='Number of measurements')
-    parser.add_argument('--n_count', type=int, default=None, help='Counting qubits (default: auto)')
-    parser.add_argument('--output', type=str, default=None, help='Output JSON file')
-    parser.add_argument('--csv', type=str, default='shor_results.csv', help='CSV file for results')
-    parser.add_argument('--max_attempts', type=int, default=5, help='Max attempts')
+    parser.add_argument('--N', type=int, required=True, 
+                        help='Number to factor')
+    parser.add_argument('--a', type=int, default=None, 
+                        help='Base (default: random coprime to N)')
+    parser.add_argument('--shots', type=int, default=2048, 
+                        help='Number of measurements (default: 2048)')
+    parser.add_argument('--n_count', type=int, default=None, 
+                        help='Counting qubits (default: auto = 2*ceil(log2(N)))')
+    parser.add_argument('--output', type=str, default=None, 
+                        help='Output JSON file for detailed results')
+    parser.add_argument('--csv', type=str, default=None, 
+                        help='CSV file for results (default: auto-named based on mode)')
+    parser.add_argument('--circuits_dir', type=str, default=None,
+                        help='Directory to save circuit PNGs (default: None)')
+    parser.add_argument('--max_attempts', type=int, default=5, 
+                        help='Maximum attempts (default: 5)')
+    parser.add_argument('--use_ibm', action='store_true',
+                        help='Use IBM Quantum hardware')
+    parser.add_argument('--backend', type=str, default=None,
+                        help='Specific IBM backend name')
+    parser.add_argument('--gpu', action='store_true',
+                        help='Use GPU acceleration (requires qiskit-aer-gpu)')
     
     args = parser.parse_args()
     
-    # Try multiple attempts
+    # ========================================================================
+    # BACKEND SETUP
+    # ========================================================================
+    backend = None
+    mode = 'quantum' if args.use_ibm else 'simulation'
+    
+    # Auto-select CSV filename based on mode if not specified
+    if args.csv is None:
+        if args.use_ibm:
+            csv_file = 'shor_generic_quantum_results.csv'
+        else:
+            csv_file = 'shor_generic_results.csv'
+    else:
+        csv_file = args.csv
+    
+    if args.use_ibm:
+        if args.gpu:
+            print("[WARNING] --gpu ignored when using IBM Quantum hardware")
+        
+        if not HAVE_IBM:
+            print("[ERROR] qiskit-ibm-runtime not installed.")
+            print("Install with: pip install qiskit-ibm-runtime")
+            sys.exit(1)
+        
+        try:
+            print("[INFO] Loading IBM Quantum credentials...")
+            import my_credentials
+        except ImportError:
+            print("[ERROR] Could not import my_credentials.py")
+            print("Create my_credentials.py with your IBM Quantum token.")
+            sys.exit(1)
+        
+        try:
+            service = QiskitRuntimeService(channel="ibm_quantum")
+        except Exception as e:
+            print(f"[ERROR] Could not connect to IBM Quantum: {e}")
+            sys.exit(1)
+        
+        min_qubits = max(8, 2 * math.ceil(math.log2(args.N))) + math.ceil(math.log2(args.N))
+        
+        if args.backend:
+            backend = service.backend(args.backend)
+            print(f"[INFO] Using backend: {backend.name}")
+        else:
+            all_backends = service.backends(operational=True, min_num_qubits=min_qubits)
+            if not all_backends:
+                print(f"[ERROR] No available backends with {min_qubits}+ qubits")
+                sys.exit(1)
+            
+            real_backends = [b for b in all_backends if not b.simulator]
+            if real_backends:
+                backend = min(real_backends, key=lambda b: b.status().pending_jobs)
+                print(f"[INFO] Auto-selected: {backend.name}")
+            else:
+                backend = all_backends[0]
+                print(f"[INFO] Using simulator: {backend.name}")
+        
+        print(f"[INFO] Backend qubits: {backend.num_qubits}")
+        print(f"[INFO] Pending jobs: {backend.status().pending_jobs}")
+    else:
+        # Setup local simulator with optional GPU
+        if args.gpu:
+            try:
+                backend = Aer.get_backend('aer_simulator')
+                backend.set_options(device='GPU')
+                print(f"[INFO] Using Aer simulator with GPU acceleration")
+                print(f"[INFO] ⚡ GPU backend configured (CUDA/cuQuantum)")
+            except Exception as e:
+                print(f"[WARNING] GPU acceleration requested but not available: {e}")
+                print(f"[INFO] Falling back to CPU simulator")
+                backend = Aer.get_backend('aer_simulator')
+        else:
+            backend = Aer.get_backend('aer_simulator')
+            print(f"[INFO] Using Aer simulator (CPU)")
+    
+    print(f"[INFO] Output CSV: {csv_file}")
+
+    # ========================================================================
+    # RUN ATTEMPTS
+    # ========================================================================
     for attempt in range(args.max_attempts):
         if attempt > 0:
             print(f"\n{'='*70}")
@@ -544,19 +591,22 @@ def main():
             print(f"{'='*70}")
         
         log_data = run_shor_generic_with_logging(
-            args.N,
+            N=args.N,
             a=args.a if attempt == 0 else None,
             shots=args.shots,
-            n_count=args.n_count
+            n_count=args.n_count,
+            backend=backend,
+            circuits_dir=args.circuits_dir,
+            mode=mode
         )
         
         # Save results
         if args.output:
             output_file = args.output if attempt == 0 else args.output.replace('.json', f'_attempt{attempt+1}.json')
-            save_results(log_data, output_file)
+            save_results_json(log_data, output_file)
         
         # Append to CSV
-        append_to_csv(log_data, args.csv)
+        append_to_csv(log_data, csv_file)
         
         if log_data['results'].get('success'):
             sys.exit(0)
