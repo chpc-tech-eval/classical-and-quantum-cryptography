@@ -125,16 +125,36 @@ make -j$(nproc)
 
 ```
 
-7) Next, we need to choose parameterization files to perform the tests, these can be found at ![dftb.org](dftb.org), for this we are trying out PTBP, as this is a general test that covers quite a bit:
+7) Next, we need to choose parameterization files to perform the tests, these can be found at ![dftb.org](www.dftb.org), for this we are trying out PTBP, as this is a general test that covers quite a bit:
 
 The PTBP download link takes us to a page where we select options for thee file we want to download. Now I have no idea how to do this on the node, so I did everything on my laptop and did an SCP to get the files on the node.
 It might be a good idea to pregenerate a few of these and add them to the repo.
 
 *Added under folder ~/dftb_data on the A100
 
-```
+Move this zip to wherever you want to, and unzip it. We then need to configure the environmant variables to allow DFTB+ to use it.
 
 ```
+unzip ~/dftb_data/PTBP_skfs.zip
+
+#creates a folder in the same directory
+#use this folder for config
+
+export DFTB_PREFIX=~/dftb_data/PTBP_skfs
+
+#optionally verify that the files exist, should be a bunch of skf files
+ls $DFTB_PREFIX
+```
+
+8) Finally, we can run the tests:
+
+
+```
+cd ~/src/dftbplus/build
+ctest --output-on-failure
+```
+
+aaaaand its giving errors 
 
 
 
