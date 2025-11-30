@@ -188,6 +188,9 @@ export EDITOR=/usr/bin/nano
 pip install jupyter
 ipython kernel install --user --name=ascotenv
 
+#this was an issue i dont think i installed it in the venv
+pip install -e .
+
 #install jupyterlab because im not doing this in a terminal
 pip install jupyterlab ipywidgets plotly jupyter-dash
 jupyter lab --ip 0.0.0.0 --port 8889 --no-browser
