@@ -1,0 +1,60 @@
+======================================================================
+ASCOT5 Benchmark 1 Verification
+======================================================================
+
+1. MARKER SUMMARY
+----------------------------------------------------------------------
+End conditions: ([(np.int64(30), 'TLIM'), (np.int64(7970), 'THERMAL')], [])
+Total markers: 8,000
+Thermalized: 7,970 (99.6%)
+Time limit: 30 (0.4%)
+
+2. ENERGY ANALYSIS
+----------------------------------------------------------------------
+Initial energy:
+  Mean: 3.5000 eV MeV
+  Std:  0.0000 eV MeV
+  Min:  3.5000 eV MeV
+  Max:  3.5000 eV MeV
+
+Final energy:
+  Mean: 30.68 eV keV
+  Std:  196.11 eV keV
+  Min:  12.70 eV keV
+  Max:  3499.87 eV keV
+
+Energy ratio (final/initial): 0.0088 dimensionless
+Energy loss: 3.469 eV MeV
+
+3. SPATIAL DISTRIBUTION
+----------------------------------------------------------------------
+Initial R: 6.012 m ± 0.869 m m
+Initial Z: -0.006 m ± 0.872 m m
+Final R:   6.411 m ± 0.893 m m
+Final Z:   0.008 m ± 0.913 m m
+
+4. DISTRIBUTION DATA
+----------------------------------------------------------------------
+✓ 5D distribution collected
+  Grid: 50R × 50Z × 1phi × 100ppar × 50pperp
+✓ rho5D distribution collected
+  Grid: 100rho × 1theta × 1phi × 100ppar × 50pperp
+
+5. SUCCESS CRITERIA
+----------------------------------------------------------------------
+✓ All 8,000 markers processed
+✓ Markers slowed down (final: 30.7 eV keV)
+✓ Energy ratio acceptable (0.0088 dimensionless)
+✓ Most markers thermalized (7,970 / 8,000)
+✓ Both distributions collected successfully
+
+======================================================================
+BENCHMARK 1: PASSED ✓
+
+All critical criteria met!
+The simulation successfully demonstrates:
+  - Complete marker tracking
+  - Significant energy loss through collisions
+  - Proper thermalization behavior
+  - Distribution function collection
+======================================================================

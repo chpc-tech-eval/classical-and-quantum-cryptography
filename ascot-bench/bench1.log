@@ -1,0 +1,138 @@
+ASCOT5_MAIN
+Tag 5.6.2
+Branch main
+
+Initialized MPI, rank 0, size 1.
+
+Reading and initializing input.
+
+Input file is benchmark1.h5.
+
+Reading options input.
+Active QID is 3429244611
+Options read and initialized.
+
+Reading magnetic field input.
+Active QID is 0286766811
+
+Analytical tokamak magnetic field (B_GS)
+Psi at magnetic axis (6.618 m, -0.000 m)
+-5.410 (evaluated)
+-5.410 (given)
+Magnetic field on axis:
+B_R = 0.000 B_phi = 4.965 B_z = -0.000
+Number of toroidal field coils 0
+Magnetic field read and initialized.
+
+Reading electric field input.
+Active QID is 1709948841
+
+Trivial Cartesian electric field (E_TC)
+E_x = 0.000000e+00, E_y = 0.000000e+00, E_z = 0.000000e+00
+Electric field read and initialized.
+
+Reading plasma input.
+Active QID is 1357932710
+
+1D plasma profiles (P_1D)
+Min rho = 0.00e+00, Max rho = 1.00e+01, Number of rho grid points = 100, Number of ion species = 1
+Species Z/A  charge [e]/mass [amu] Density [m^-3] at Min/Max rho    Temperature [eV] at Min/Max rho
+   1  /  1     1  /  1.000             1.00e+21/1.00e+00                1.00e+04/1.00e+04       
+[electrons]   -1  /  0.001             1.00e+21/1.00e+00                1.00e+04/1.00e+04       
+Toroidal rotation [rad/s] at Min/Max rho: 0.00e+00/0.00e+00
+Quasi-neutrality is (electron / ion charge density) 1.00
+Toroidal rotation [rad/s] at Min/Max rho: 0.00e+00/0.00e+00
+Plasma data read and initialized.
+
+Reading neutral input.
+Active QID is 2691322613
+
+1D neutral density and temperature (N0_1D)
+Grid:  nrho =    3   rhomin = 0.000   rhomax = 2.000
+ Number of neutral species = 1
+Species Z/A   (Maxwellian)
+        1/  1 (1)    
+Neutral data read and initialized.
+
+Reading wall input.
+Active QID is 3767785534
+
+2D wall model (wall_2D)
+Number of wall elements = 4, R extend = [0.01, 100.00], z extend = [-100.00, 100.00]
+Wall data read and initialized.
+
+Reading boozer input.
+Active QID is 1830320762
+
+Boozer input
+psi grid: n =    6 min = 0.000 max = 1.000
+thetageo grid: n =   18
+thetabzr grid: n =   10
+Boozer data read and initialized.
+
+Reading MHD input.
+Active QID is 3869022693
+
+MHD (stationary) input
+Grid: nrho =    6 rhomin = 0.000 rhomax = 1.000
+
+Modes:
+(n,m) = ( 1, 3) Amplitude = 0.1 Frequency =   1 Phase =   0
+(n,m) = ( 2, 4) Amplitude =   2 Frequency = 1.5 Phase = 0.785
+MHD data read and initialized.
+
+Reading atomic reaction input.
+Active QID is 1496017138
+
+Found data for 1 atomic reactions:
+Reaction number / Total number of reactions = 1 / 1
+  Reactant species Z_1 / A_1, Z_2 / A_2     = 0 / 0, 0 / 0
+  Min/Max energy                            = 1.00e+03 / 1.00e+04
+  Min/Max density                           = 1.00e+18 / 1.00e+20
+  Min/Max temperature                       = 1.00e+03 / 1.00e+04
+  Number of energy grid points              = 3
+  Number of density grid points             = 4
+  Number of temperature grid points         = 5
+Atomic reaction data read and initialized.
+
+Reading marker input.
+Active QID is 3528445105
+
+Loaded 8000 guiding centers.
+Marker data read and initialized.
+
+All input read and initialized.
+
+Initializing marker states.
+Estimated memory usage 0.1 MB.
+Marker states initialized.
+
+Preparing output.
+Note: Output file benchmark1.h5 is already present.
+
+The qid of this run is 0161814410
+
+Inistate written.
+Simulation begins; 128 threads.
+Simulation complete.
+Simulation finished in 1547.059177 s
+Endstate written.
+
+Combining and writing diagnostics.
+
+Writing diagnostics output.
+
+Writing 5D distribution.
+
+Writing rho 5D distribution.
+
+Diagnostics output written.
+Diagnostics written.
+
+Summary of results:
+     7970 markers had end condition Thermalization
+       30 markers had end condition Sim time limit
+
+          No markers were aborted.
+
+Done.
